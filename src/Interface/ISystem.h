@@ -1,0 +1,19 @@
+//
+// Created by niffo on 7/16/2025.
+//
+
+#ifndef ISYSTEM_H
+#define ISYSTEM_H
+
+#include "Core/ObjectID.h"
+
+class ISystem: public ObjectID
+{
+public:
+    virtual ~ISystem() = default;
+
+    virtual bool OnInit() = 0;
+    virtual bool OnDelete() = 0;
+};
+
+#endif //ISYSTEM_H
