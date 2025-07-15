@@ -30,7 +30,11 @@ target_include_directories(imgui_lib PUBLIC ${imgui_SOURCE_DIR}/backends)
 # ========================= Linked Imgui =========================
 
 # Main Stuff
-add_executable(application WIN32 main.cpp)
+file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
+        ${CMAKE_CURRENT_SOURCE_DIR}/*.h
+)
+add_executable(application WIN32 main.cpp ${SOURCE_FILES})
 
 # Labour Stuff hehehe
 target_link_libraries(application PRIVATE Vulkan::Vulkan)
