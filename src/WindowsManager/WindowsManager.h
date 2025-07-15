@@ -5,7 +5,7 @@
 #ifndef WINDOWSMANAGER_H
 #define WINDOWSMANAGER_H
 
-#include "Core/DefineWindows.h"
+#include "Common/DefineWindows.h"
 
 #include <string>
 #include <optional>

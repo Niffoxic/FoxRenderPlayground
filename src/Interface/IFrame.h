@@ -5,7 +5,7 @@
 #ifndef IFRAME_H
 #define IFRAME_H
 
-#include "Core/ObjectID.h"
+#include "Common/ObjectID.h"
 
 class IFrame: public ObjectID
 {
