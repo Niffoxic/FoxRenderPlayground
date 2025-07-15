@@ -13,7 +13,7 @@ public:
     virtual ~ISystem() = default;
 
     virtual bool OnInit() = 0;
-    virtual bool OnDelete() = 0;
+    virtual bool OnRelease() = 0;
 };
 
 #endif //ISYSTEM_H
