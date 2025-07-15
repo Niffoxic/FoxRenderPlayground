@@ -28,7 +28,7 @@ public:
 
     //~ System Interface Impl
     bool OnInit() override;
-    bool OnDelete() override;
+    bool OnRelease() override;
 
     //~ Getters
     [[nodiscard]] HWND GetWinHandle()         const { return m_hWnd;            }

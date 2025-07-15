@@ -6,7 +6,7 @@
 
 WindowsManager::~WindowsManager()
 {
-    OnDelete();
+    OnRelease();
 }
 
 std::optional<int> WindowsManager::ProcessMessages()
@@ -42,7 +42,7 @@ bool WindowsManager::OnInit()
     return InitWindow();
 }
 
-bool WindowsManager::OnDelete()
+bool WindowsManager::OnRelease()
 {
     return true;
 }
