@@ -1,0 +1,66 @@
+# ------------------------------
+# CLion / JetBrains IDE settings
+# ------------------------------
+.idea/
+*.iml
+*.iws
+
+# ------------------------------
+# OS generated files
+# ------------------------------
+.DS_Store
+Thumbs.db
+
+# ------------------------------
+# Build directories
+# ------------------------------
+cmake-build-*/
+build/
+out/
+bin/
+lib/
+
+# If you use Ninja or Makefiles manually
+Makefile
+CMakeCache.txt
+CMakeFiles/
+CTestTestfile.cmake
+cmake_install.cmake
+install_manifest.txt
+
+# ------------------------------
+# CMake user presets or config
+# ------------------------------
+CMakeUserPresets.json
+CMakePresets.json.user
+
+# ------------------------------
+# Compiled object files
+# ------------------------------
+*.o
+*.obj
+*.so
+*.a
+*.lib
+*.dll
+*.exe
+
+# ------------------------------
+# Generated files
+# ------------------------------
+*.log
+*.pch
+*.pyc
+*.pyo
+*.class
+
+# ------------------------------
+# Crash reports / core dumps
+# ------------------------------
+core
+*.stackdump
+
+# ------------------------------
+# CLion caches (optional)
+# ------------------------------
+.clion/
