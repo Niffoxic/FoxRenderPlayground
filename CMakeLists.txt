@@ -3,4 +3,4 @@ project(FoxRenderEngine)
 
 set(CMAKE_CXX_STANDARD 23)
 
-add_executable(FoxRenderEngine WIN32 main.cpp)
+add_executable(application WIN32 main.cpp)
