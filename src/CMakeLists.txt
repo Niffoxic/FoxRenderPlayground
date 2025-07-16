@@ -45,5 +45,6 @@ target_include_directories(
         PRIVATE
         ${Vulkan_INCLUDE_DIRS}
         ${CMAKE_CURRENT_SOURCE_DIR} # Its just what I prefer
+        ${CMAKE_CURRENT_SOURCE_DIR}/Utils # same reason I dont like utils then this then that....
         imgui_lib
 )
