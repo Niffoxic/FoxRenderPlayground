@@ -89,7 +89,7 @@ void RenderManager::CreateInstance()
     PrintAvailableInstanceExtensions();
 #endif
 
-    auto requiredExtensions = GetRequiredInstanceExtensions();
+    const auto requiredExtensions = GetRequiredInstanceExtensions();
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = m_pWinManager->GetWindowsTitle().c_str();
