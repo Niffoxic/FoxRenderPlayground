@@ -3,9 +3,9 @@
 //
 
 #include "RenderManager.h"
+#include "Logger/Logger.h"
 
 #include <stdexcept>
-#include <iostream>     // TODO: Bruhhh write a basic logger at least bruhhhhhhhhhh
 
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
@@ -60,10 +60,10 @@ void RenderManager::PrintAvailableInstanceExtensions()
         throw std::runtime_error("Failed to get vulkan extension.");
     }
 
-    std::cout << "Available extensions:\n";
+    LOG_INFO("Available extensions:");
     for (const auto& extension : extensions)
     {
-        std::cout << "\t" << extension.extensionName << "\n";
+        LOG_PRINT("\t{}", extension.extensionName);
     }
 }
 
@@ -111,6 +111,6 @@ void RenderManager::CreateInstance()
     }
 
 #if defined(ENABLE_TERMINAL)
-    std::cout << "Vulkan Instance Created!" << std::endl;
+    LOG_SUCCESS("Vulkan Instance Created!");
 #endif
 }
