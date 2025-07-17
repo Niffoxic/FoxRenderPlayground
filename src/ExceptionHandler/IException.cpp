@@ -3,16 +3,18 @@
 //
 
 #include "IException.h"
+
+#include <iostream>
+
 #include "FileSystem/FileSystem.h"
 #include "Logger/Logger.h"
 
 #include <sstream>
 
-IException::IException(const char *file, int line, const char *func, const char *message)
+IException::IException(const char *file, int line, const char *func)
 :   m_szErrorFileName(file),
     m_nLine(line),
-    m_szErrorFunctionName(func),
-    m_szErrorMessage(message)
+    m_szErrorFunctionName(func)
 {}
 
 const char * IException::what() const noexcept
@@ -29,8 +31,9 @@ const std::string& IException::GetErrorLog() const
         << "[Exception]\nAt Function: " << m_szErrorFunctionName
         << "\nFile: " << m_szErrorFileName << "\nLine: " << m_nLine;
 
-        if (const std::string& addedMessage = GetAddOnErrorMessage(); not addedMessage.empty())
+        if (const std::string addedMessage = GetAddOnErrorMessage(); not addedMessage.empty())
         {
+            os << "\n[Error Code]: " << GetErrorCode();
             os << "\n[Details]: " << addedMessage;
         }
 

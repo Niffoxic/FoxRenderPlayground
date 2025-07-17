@@ -4,7 +4,7 @@
 
 #include "WindowsManager.h"
 
-#include "ExceptionHandler/IException.h"
+#include "ExceptionHandler/WindowException.h"
 
 WindowsManager::~WindowsManager()
 {
@@ -102,7 +102,7 @@ bool WindowsManager::InitWindow()
 
     if (!m_hWnd)
     {
-        THROW_EXCEPTION("Chill");
+        THROW_WINDOW_EXCEPTION("Chill");
     }
 
     ShowWindow(m_hWnd, SW_SHOW);
