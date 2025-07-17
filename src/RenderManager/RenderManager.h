@@ -14,12 +14,14 @@ public:
     explicit RenderManager(WindowsManager* winManager);
     ~RenderManager() override;
 
-    bool OnInit() override;
-    bool OnRelease() override;
+    //~ System Interface Impl
+    bool OnInit()         override;
+    bool OnRelease()      override;
 
-    void OnFrameBegin() override;
+    //~ Frame Interface Impl
+    void OnFrameBegin()   override;
     void OnFramePresent() override;
-    void OnFrameEnd() override;
+    void OnFrameEnd()     override;
 
 private:
     //~ Initialize Vulkan

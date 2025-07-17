@@ -20,6 +20,14 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 
 ## Build Instructions
 
+### CMake Options 
+`-DENABLE_TERMINAL=ON|OFF`
+Enables or disables the debug terminal.
+* ON: Shows a debug console during execution.
+* OFF: Disables the console window.
+* Note: In Release mode, even with `ON`, 
+  only essential execution logs will be shown.
+
 ```bash
 git clone https://github.com/Niffoxic/FoxRenderEngine.git
 cd FoxRenderEngine

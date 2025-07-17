@@ -16,18 +16,18 @@
 class WindowsManager final: public ISystem, public IFrame
 {
 public:
-    WindowsManager() = default;
-    ~WindowsManager() override;
+     WindowsManager() = default;
+    ~WindowsManager()   override;
 
     static std::optional<int> ProcessMessages();
 
     //~ Frame Interface Impl
-    void OnFrameBegin() override;
+    void OnFrameBegin()   override;
     void OnFramePresent() override;
-    void OnFrameEnd() override;
+    void OnFrameEnd()     override;
 
     //~ System Interface Impl
-    bool OnInit() override;
+    bool OnInit()    override;
     bool OnRelease() override;
 
     //~ Getters
