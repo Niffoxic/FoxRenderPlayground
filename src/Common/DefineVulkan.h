@@ -47,10 +47,13 @@ namespace Fox
 typedef struct QUEUE_FAMILY_INDEX_DESC
 {
     std::optional<uint32_t> GraphicsFamily;
+    std::optional<uint32_t> PresentFamily;
 
     bool IsInitialized() const
     {
-        return GraphicsFamily.has_value();
+        return
+        GraphicsFamily.has_value() &&
+        PresentFamily.has_value();
     }
 }QUEUE_FAMILY_INDEX_DESC;
 
@@ -78,8 +81,9 @@ inline void PrintAvailableInstanceExtensions()
     }
 }
 
-inline QUEUE_FAMILY_INDEX_DESC FindQueueFamily(VkPhysicalDevice device)
+inline QUEUE_FAMILY_INDEX_DESC FindQueueFamily(VkPhysicalDevice device, VkSurfaceKHR surface)
 {
+    LOG_WARNING("Finding Queue Family");
     QUEUE_FAMILY_INDEX_DESC desc{};
 
     uint32_t queueFamilyCount = 0;
@@ -88,21 +92,35 @@ inline QUEUE_FAMILY_INDEX_DESC FindQueueFamily(VkPhysicalDevice device)
     std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
     vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
 
-    int graphicsSupportedFamily = 0;
+    int queueIndex = 0;
     for (const auto& queueFamily : queueFamilies)
     {
+        VkBool32 presentSupport = false;
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, queueIndex, surface, &presentSupport);
+
+        if (not desc.IsInitialized() && presentSupport)
+        {
+            desc.PresentFamily = queueIndex;
+            LOG_INFO("Found Present Family at: {}", desc.PresentFamily.value());
+        }
         if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && not desc.IsInitialized())
-            desc.GraphicsFamily = graphicsSupportedFamily;
-
-        graphicsSupportedFamily++;
+        {
+            desc.GraphicsFamily = queueIndex;
+            LOG_INFO("Found Graphics Family at: {}", desc.GraphicsFamily.value());
+        }
+        if (desc.IsInitialized())
+        {
+            LOG_SUCCESS("Found Suitable Queue Family");
+            return desc;
+        }
+        queueIndex++;
     }
-
     return desc;
 }
 
-inline bool IsDeviceSuitable(VkPhysicalDevice device)
+inline bool IsDeviceSuitable(const VkPhysicalDevice& device, const VkSurfaceKHR& surface)
 {
-    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(device);
+    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(device, surface);
     return desc.IsInitialized();
 }
 
@@ -167,7 +185,7 @@ static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
         break;
 
     case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-        LOG_ERROR("[VK][{}]: {}", typeStr, message);
+        THROW_EXCEPTION_MSG((std::format("[VK][{}]: {}", typeStr, message)).c_str());
         break;
 
     default:

@@ -7,6 +7,7 @@
 #include "ExceptionHandler/IException.h"
 
 #include <stdexcept>
+#include <set>
 
 
 RenderManager::RenderManager(WindowsManager *winManager)
@@ -135,7 +136,7 @@ void RenderManager::SelectPhysicalDevice()
     //~ Selecting whatever is suitable I DONT GIVE A SHEEET
     for (const auto& device : devices)
     {
-        if (IsDeviceSuitable(device))
+        if (IsDeviceSuitable(device, m_vkSurface))
         {
             m_vkPhysicalDevice = device;
             break;
@@ -149,26 +150,35 @@ void RenderManager::SelectPhysicalDevice()
 void RenderManager::CreateLogicalDevice()
 {
     LOG_WARNING("Trying to Create Logical Device");
-    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(m_vkPhysicalDevice);
+    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(m_vkPhysicalDevice, m_vkSurface);
     if (not desc.IsInitialized()) THROW_EXCEPTION_MSG("Not a suitable family desc");
 
-    VkDeviceQueueCreateInfo queueCreateInfo{};
-    queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
-    queueCreateInfo.queueFamilyIndex = desc.GraphicsFamily.value();
-    queueCreateInfo.queueCount = 1;
+    std::set uniqueQueueFamilies{ desc.GraphicsFamily.value(), desc.PresentFamily.value() };
+    std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
+
 
     constexpr float queuePriority = 1.0f;
-    queueCreateInfo.pQueuePriorities = &queuePriority;
+
+    for (uint32_t queueFamilyIndex : uniqueQueueFamilies)
+    {
+        VkDeviceQueueCreateInfo queueCreateInfo{};
+        queueCreateInfo.sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO;
+        queueCreateInfo.queueFamilyIndex = queueFamilyIndex;
+        queueCreateInfo.queueCount = 1;
+        queueCreateInfo.pQueuePriorities = &queuePriority;
+        queueCreateInfos.emplace_back(queueCreateInfo);
+    }
 
     VkPhysicalDeviceFeatures deviceFeatures{};
 
     VkDeviceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
-    createInfo.queueCreateInfoCount = 1;
-    createInfo.pQueueCreateInfos = &queueCreateInfo;
+    createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
+    createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pEnabledFeatures = &deviceFeatures;
     createInfo.enabledExtensionCount = 0;
     createInfo.enabledLayerCount = 0;
+
 #if defined(DEBUG) || defined(_DEBUG)
     createInfo.enabledLayerCount = static_cast<uint32_t>(Fox::vkValidationLayers.size());
     createInfo.ppEnabledLayerNames = Fox::vkValidationLayers.data();
@@ -180,3 +190,4 @@ void RenderManager::CreateLogicalDevice()
     vkGetDeviceQueue(m_vkDevice, desc.GraphicsFamily.value(), 0, &m_vkGraphicsQueue);
     LOG_SUCCESS("Vulkan Device Created!");
 }
+

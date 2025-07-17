@@ -40,6 +40,7 @@ private:
     VkDevice                    m_vkDevice          { VK_NULL_HANDLE };
     VkQueue                     m_vkGraphicsQueue   { VK_NULL_HANDLE };
     VkSurfaceKHR                m_vkSurface         { VK_NULL_HANDLE };
+    VkQueue                     m_vkPresentQueue    { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H
