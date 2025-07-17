@@ -102,7 +102,7 @@ bool WindowsManager::InitWindow()
 
     if (!m_hWnd)
     {
-        THROW_WINDOW_EXCEPTION("Chill");
+        THROW_WINDOW_EXCEPTION();
     }
 
     ShowWindow(m_hWnd, SW_SHOW);

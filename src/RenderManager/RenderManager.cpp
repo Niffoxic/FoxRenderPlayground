@@ -3,12 +3,6 @@
 //
 
 #include "RenderManager.h"
-#include "Logger/Logger.h"
-#include "ExceptionHandler/IException.h"
-
-#include <stdexcept>
-#include <set>
-
 
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
@@ -26,10 +20,11 @@ bool RenderManager::OnInit()
 
 bool RenderManager::OnRelease()
 {
+    vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
     vkDestroyDevice(m_vkDevice, nullptr);
 
 #if defined(DEBUG) || defined(_DEBUG)
-    DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
+    Fox::DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
 #endif
 
     vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
@@ -59,11 +54,12 @@ bool RenderManager::InitVulkan()
     CreateSurface();
 
 #if defined(DEBUG) || defined(_DEBUG)
-    CreateDebugUtilsMessenger(m_vkInstance, m_vkDebugMessenger);
+    Fox::CreateDebugUtilsMessenger(m_vkInstance, m_vkDebugMessenger);
 #endif
 
     SelectPhysicalDevice();
     CreateLogicalDevice();
+    CreateSwapChain();
     return true;
 }
 
@@ -88,14 +84,14 @@ void RenderManager::CreateInstance()
 
 // Add Debug Extension
 #if defined(DEBUG) || defined(_DEBUG)
-    PrintAvailableInstanceExtensions();
-    if (!CheckValidationLayerSupport()) THROW_EXCEPTION();
+    Fox::PrintAvailableInstanceExtensions();
+    if (!Fox::CheckValidationLayerSupport()) THROW_EXCEPTION();
 
     createInfo.enabledLayerCount  = static_cast<uint32_t>(Fox::vkValidationLayers.size());
     createInfo.ppEnabledLayerNames = Fox::vkValidationLayers.data();
 
     VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
-    PopulateDebugMessengerCreateInfo(debugCreateInfo);
+    Fox::PopulateDebugMessengerCreateInfo(debugCreateInfo);
     createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)(&debugCreateInfo);
 
 #else
@@ -136,7 +132,7 @@ void RenderManager::SelectPhysicalDevice()
     //~ Selecting whatever is suitable I DONT GIVE A SHEEET
     for (const auto& device : devices)
     {
-        if (IsDeviceSuitable(device, m_vkSurface))
+        if (Fox::IsDeviceSuitable(device, m_vkSurface))
         {
             m_vkPhysicalDevice = device;
             break;
@@ -150,7 +146,7 @@ void RenderManager::SelectPhysicalDevice()
 void RenderManager::CreateLogicalDevice()
 {
     LOG_WARNING("Trying to Create Logical Device");
-    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(m_vkPhysicalDevice, m_vkSurface);
+    const QUEUE_FAMILY_INDEX_DESC desc = Fox::FindQueueFamily(m_vkPhysicalDevice, m_vkSurface);
     if (not desc.IsInitialized()) THROW_EXCEPTION_MSG("Not a suitable family desc");
 
     std::set uniqueQueueFamilies{ desc.GraphicsFamily.value(), desc.PresentFamily.value() };
@@ -176,7 +172,8 @@ void RenderManager::CreateLogicalDevice()
     createInfo.queueCreateInfoCount = static_cast<uint32_t>(queueCreateInfos.size());
     createInfo.pQueueCreateInfos = queueCreateInfos.data();
     createInfo.pEnabledFeatures = &deviceFeatures;
-    createInfo.enabledExtensionCount = 0;
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(Fox::vkDeviceExtensions.size());
+    createInfo.ppEnabledExtensionNames = Fox::vkDeviceExtensions.data();
     createInfo.enabledLayerCount = 0;
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -191,3 +188,63 @@ void RenderManager::CreateLogicalDevice()
     LOG_SUCCESS("Vulkan Device Created!");
 }
 
+void RenderManager::CreateSwapChain()
+{
+    LOG_WARNING("Attempting to create swap chain");
+    const SWAP_CHAIN_SUPPORT_DESC desc = Fox::QuerySwapChainSupport(m_vkPhysicalDevice, m_vkSurface);
+
+    const VkSurfaceFormatKHR surfaceFormat = Fox::SelectSwapChainFormat(desc.Formats);
+    const VkPresentModeKHR presentMode = Fox::SelectSwapChainPresentMode(desc.PresentModes);
+    const VkExtent2D extent = Fox::SelectSwapChainExtent(desc.Capabilities, m_pWinManager);
+
+    uint32_t imageCount = desc.Capabilities.minImageCount + 1;
+
+    if (desc.Capabilities.maxImageCount > 0 && imageCount > desc.Capabilities.maxImageCount)
+        imageCount = desc.Capabilities.maxImageCount;
+
+    VkSwapchainCreateInfoKHR createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
+    createInfo.surface = m_vkSurface;
+    createInfo.minImageCount = imageCount;
+    createInfo.imageFormat = surfaceFormat.format;
+    createInfo.imageColorSpace = surfaceFormat.colorSpace;
+    createInfo.imageExtent = extent;
+    createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
+    createInfo.imageArrayLayers = 1;
+    createInfo.presentMode = presentMode;
+
+    const QUEUE_FAMILY_INDEX_DESC qDesc = Fox::FindQueueFamily(m_vkPhysicalDevice, m_vkSurface);
+    const uint32_t qFamilyIndices[]{ qDesc.GraphicsFamily.value(), qDesc.PresentFamily.value() };
+
+    if (qDesc.GraphicsFamily.value() != qDesc.PresentFamily.value())
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_CONCURRENT;
+        createInfo.queueFamilyIndexCount = 2;
+        createInfo.pQueueFamilyIndices = qFamilyIndices;
+    }else
+    {
+        createInfo.imageSharingMode = VK_SHARING_MODE_EXCLUSIVE;
+        createInfo.queueFamilyIndexCount = 0;
+        createInfo.pQueueFamilyIndices = nullptr;
+    }
+
+    createInfo.preTransform = desc.Capabilities.currentTransform;
+    createInfo.compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR;
+    createInfo.presentMode = presentMode;
+    createInfo.clipped = VK_TRUE;
+    createInfo.oldSwapchain = VK_NULL_HANDLE;
+
+    if (vkCreateSwapchainKHR(m_vkDevice, &createInfo, nullptr, &m_vkSwapChain) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create swap chain!");
+
+    //~ Caching for future use
+    m_descSwapChainSupportDetails.SurfaceFormat = surfaceFormat;
+    m_descSwapChainSupportDetails.Extent = extent;
+
+    LOG_SUCCESS("Created swap chain!");
+
+    //~ Retrieve bb image or render output whateverr.....
+    vkGetSwapchainImagesKHR(m_vkDevice, m_vkSwapChain, &imageCount, nullptr);
+    m_vkSwapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(m_vkDevice, m_vkSwapChain, &imageCount, m_vkSwapChainImages.data());
+}

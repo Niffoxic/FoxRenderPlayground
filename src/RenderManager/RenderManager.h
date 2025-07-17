@@ -7,7 +7,6 @@
 
 #include "Interface/ISystem.h"
 #include "Common/DefineVulkan.h"
-#include "WindowsManager/WindowsManager.h"
 
 class RenderManager final: public ISystem, public IFrame
 {
@@ -29,6 +28,7 @@ private:
     void CreateSurface();
     void SelectPhysicalDevice();
     void CreateLogicalDevice();
+    void CreateSwapChain();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -41,6 +41,15 @@ private:
     VkQueue                     m_vkGraphicsQueue   { VK_NULL_HANDLE };
     VkSurfaceKHR                m_vkSurface         { VK_NULL_HANDLE };
     VkQueue                     m_vkPresentQueue    { VK_NULL_HANDLE };
+
+    //~ Swap chain members
+    struct
+    {
+        VkSurfaceFormatKHR SurfaceFormat;
+        VkExtent2D Extent;
+    } m_descSwapChainSupportDetails{};
+    VkSwapchainKHR              m_vkSwapChain       { VK_NULL_HANDLE };
+    std::vector<VkImage>        m_vkSwapChainImages {};
 };
 
 #endif //RENDERMANAGER_H

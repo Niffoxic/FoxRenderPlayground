@@ -7,6 +7,8 @@
 #include <sstream>
 #include <iomanip>
 
+std::unique_ptr<Logger> Logger::m_pInstance = nullptr;
+
 void Logger::Initialize(const LOGGER_INIT_DESC &desc)
 {
     if (!m_pInstance)
