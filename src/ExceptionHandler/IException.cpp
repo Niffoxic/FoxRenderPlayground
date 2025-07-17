@@ -17,6 +17,13 @@ IException::IException(const char *file, int line, const char *func)
     m_szErrorFunctionName(func)
 {}
 
+IException::IException(const char *file, int line, const char *func, const char *message)
+:   m_szErrorFileName(file),
+    m_nLine(line),
+    m_szErrorFunctionName(func),
+    m_szErrorMessageName(message)
+{}
+
 const char * IException::what() const noexcept
 {
     return GetErrorLog().c_str();
@@ -35,6 +42,11 @@ const std::string& IException::GetErrorLog() const
         {
             os << "\n[Error Code]: " << GetErrorCode();
             os << "\n[Details]: " << addedMessage;
+        }
+
+        if (not m_szErrorMessageName.empty())
+        {
+            os << "\n[Message]: " << m_szErrorMessageName;
         }
 
         m_szWhatBuffer = os.str();

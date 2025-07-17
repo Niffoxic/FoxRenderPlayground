@@ -48,7 +48,6 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     catch (const std::exception& e)
     {
-        std::cerr << e.what() << '\n';
         return EXIT_FAILURE;
     }
 }

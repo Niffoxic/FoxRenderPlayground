@@ -12,6 +12,7 @@ class IException: public std::exception
 {
 public:
     IException(const char* file, int line, const char* func);
+    IException(const char* file, int line, const char* func, const char* message);
     ~IException() override = default;
 
     const char* what() const noexcept override;
@@ -28,11 +29,13 @@ protected:
 
 protected:
     std::string m_szErrorFileName;
+    std::string m_szErrorMessageName; // Optional
     int m_nLine;
     std::string m_szErrorFunctionName;
     mutable std::string m_szWhatBuffer;
 };
 
 #define THROW_EXCEPTION() throw IException(__FILE__, __LINE__, __FUNCTION__);
+#define THROW_EXCEPTION_MSG(msg) throw IException(__FILE__, __LINE__, __FUNCTION__, msg);
 
 #endif //IEXCEPTION_H

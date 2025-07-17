@@ -54,7 +54,7 @@ private:
     bool             m_bFullScreen{ false };
     HINSTANCE        m_hInstance;
     HWND             m_hWnd;
-    std::string      m_szWindowsTitle{ "Default Window" };
+    std::string      m_szWindowsTitle{ "Fox Render Application" };
     WINDOW_SIZE_DESC m_WindowSizeDesc { .Width = 1280u, .Height = 720u };
 };
 

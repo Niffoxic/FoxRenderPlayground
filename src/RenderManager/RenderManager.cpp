@@ -6,6 +6,7 @@
 #include "Logger/Logger.h"
 
 #include <stdexcept>
+#include "ExceptionHandler/IException.h"
 
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
@@ -23,6 +24,10 @@ bool RenderManager::OnInit()
 
 bool RenderManager::OnRelease()
 {
+#if defined(DEBUG) || defined(_DEBUG)
+    DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
+#endif
+
     if (m_vkInstance)
     {
         vkDestroyInstance(m_vkInstance, nullptr);
@@ -46,50 +51,18 @@ void RenderManager::OnFrameEnd()
 
 }
 
-void RenderManager::PrintAvailableInstanceExtensions()
-{
-    uint32_t extensionCount = 0;
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to get vulkan extension count.");
-    }
-
-    std::vector<VkExtensionProperties> extensions(extensionCount);
-    if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Failed to get vulkan extension.");
-    }
-
-    LOG_INFO("Available extensions:");
-    for (const auto& extension : extensions)
-    {
-        LOG_PRINT("\t{}", extension.extensionName);
-    }
-}
-
-std::vector<const char *> RenderManager::GetRequiredInstanceExtensions()
-{
-    return
-    {
-        VK_KHR_SURFACE_EXTENSION_NAME,
-        VK_KHR_WIN32_SURFACE_EXTENSION_NAME
-    };
-}
-
 bool RenderManager::InitVulkan()
 {
     CreateInstance();
+
+#if defined(DEBUG) || defined(_DEBUG)
+    CreateDebugUtilsMessenger(m_vkInstance, m_vkDebugMessenger);
+#endif
     return true;
 }
 
 void RenderManager::CreateInstance()
 {
-
-#if defined(DEBUG) || defined(_DEBUG)
-    PrintAvailableInstanceExtensions();
-#endif
-
-    const auto requiredExtensions = GetRequiredInstanceExtensions();
     VkApplicationInfo appInfo{};
     appInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     appInfo.pApplicationName = m_pWinManager->GetWindowsTitle().c_str();
@@ -101,16 +74,30 @@ void RenderManager::CreateInstance()
     VkInstanceCreateInfo createInfo{};
     createInfo.sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
     createInfo.pApplicationInfo = &appInfo;
-    createInfo.enabledLayerCount = static_cast<uint32_t>(requiredExtensions.size());
-    createInfo.ppEnabledLayerNames = requiredExtensions.data();
+
+    constexpr auto requiredExtensions = Fox::vkRequiredInstanceExtensions;
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(requiredExtensions.size());
+    createInfo.ppEnabledExtensionNames = requiredExtensions.data();
+
+// Add Debug Extension
+#if defined(DEBUG) || defined(_DEBUG)
+    PrintAvailableInstanceExtensions();
+    if (!CheckValidationLayerSupport()) THROW_EXCEPTION();
+
+    createInfo.enabledLayerCount  = static_cast<uint32_t>(Fox::vkValidationLayers.size());
+    createInfo.ppEnabledLayerNames = Fox::vkValidationLayers.data();
+
+    VkDebugUtilsMessengerCreateInfoEXT debugCreateInfo{};
+    PopulateDebugMessengerCreateInfo(debugCreateInfo);
+    createInfo.pNext = (VkDebugUtilsMessengerCreateInfoEXT*)(&debugCreateInfo);
+
+#else
     createInfo.enabledLayerCount = 0;
+    createInfo.pNext = nullptr;
+#endif
 
     if (vkCreateInstance(&createInfo, nullptr, &m_vkInstance) != VK_SUCCESS)
-    {
         throw std::runtime_error("Failed to create instance.");
-    }
 
-#if defined(ENABLE_TERMINAL)
     LOG_SUCCESS("Vulkan Instance Created!");
-#endif
 }

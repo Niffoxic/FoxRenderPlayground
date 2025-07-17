@@ -5,12 +5,9 @@
 #ifndef RENDERMANAGER_H
 #define RENDERMANAGER_H
 
-#include <vector>
-
 #include "Interface/ISystem.h"
+#include "Common/DefineVulkan.h"
 #include "WindowsManager/WindowsManager.h"
-
-#include <vulkan/vulkan.h>
 
 class RenderManager final: public ISystem, public IFrame
 {
@@ -25,10 +22,6 @@ public:
     void OnFramePresent() override;
     void OnFrameEnd() override;
 
-    //~ Helpers
-    static void PrintAvailableInstanceExtensions();
-    static std::vector<const char*> GetRequiredInstanceExtensions();
-
 private:
     //~ Initialize Vulkan
     bool InitVulkan();
@@ -39,6 +32,7 @@ private:
 
     //~ Vulkan members
     VkInstance m_vkInstance{ nullptr };
+    VkDebugUtilsMessengerEXT m_vkDebugMessenger{ nullptr };
 };
 
 #endif //RENDERMANAGER_H
