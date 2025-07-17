@@ -94,7 +94,7 @@ private:
     void EnableTerminal();
 
 private:
-    inline static std::unique_ptr<Logger> m_pInstance{ nullptr };
+    static std::unique_ptr<Logger> m_pInstance;
     std::mutex m_mutex;
     HANDLE m_hConsole{ nullptr };
     bool m_bTerminalEnabled{ false };
