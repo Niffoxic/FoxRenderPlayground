@@ -27,14 +27,17 @@ private:
     bool InitVulkan();
     void CreateInstance();
     void SelectPhysicalDevice();
+    void CreateLogicalDevice();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
 
     //~ Vulkan members
-    VkInstance m_vkInstance{ VK_NULL_HANDLE };
-    VkDebugUtilsMessengerEXT m_vkDebugMessenger{ VK_NULL_HANDLE };
-    VkPhysicalDevice m_vkPhysicalDevice{ VK_NULL_HANDLE };
+    VkInstance                  m_vkInstance        { VK_NULL_HANDLE };
+    VkDebugUtilsMessengerEXT    m_vkDebugMessenger  { VK_NULL_HANDLE };
+    VkPhysicalDevice            m_vkPhysicalDevice  { VK_NULL_HANDLE };
+    VkDevice                    m_vkDevice          { VK_NULL_HANDLE };
+    VkQueue                     m_vkGraphicsQueue   { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H
