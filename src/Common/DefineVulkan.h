@@ -62,13 +62,13 @@ inline void PrintAvailableInstanceExtensions()
     uint32_t extensionCount = 0;
     if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, nullptr) != VK_SUCCESS)
     {
-        THROW_WINDOW_EXCEPTION("Failed to get vulkan extension count.");
+        THROW_WINDOW_EXCEPTION();
     }
 
     std::vector<VkExtensionProperties> extensions(extensionCount);
     if (vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, extensions.data()) != VK_SUCCESS)
     {
-        THROW_WINDOW_EXCEPTION("Failed to get vulkan extension.");
+        THROW_WINDOW_EXCEPTION();
     }
 
     LOG_INFO("Available extensions:");

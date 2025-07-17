@@ -26,15 +26,14 @@ bool RenderManager::OnInit()
 bool RenderManager::OnRelease()
 {
     vkDestroyDevice(m_vkDevice, nullptr);
+
 #if defined(DEBUG) || defined(_DEBUG)
     DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
 #endif
 
-    if (m_vkInstance)
-    {
-        vkDestroyInstance(m_vkInstance, nullptr);
-        m_vkInstance = nullptr;
-    }
+    vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
+    vkDestroyInstance(m_vkInstance, nullptr);
+
     return true;
 }
 
@@ -56,6 +55,7 @@ void RenderManager::OnFrameEnd()
 bool RenderManager::InitVulkan()
 {
     CreateInstance();
+    CreateSurface();
 
 #if defined(DEBUG) || defined(_DEBUG)
     CreateDebugUtilsMessenger(m_vkInstance, m_vkDebugMessenger);
@@ -108,6 +108,20 @@ void RenderManager::CreateInstance()
     LOG_SUCCESS("Vulkan Instance Created!");
 }
 
+void RenderManager::CreateSurface()
+{
+    LOG_WARNING("Trying to create window surface");
+    VkWin32SurfaceCreateInfoKHR surfaceCreateInfo{};
+    surfaceCreateInfo.sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR;
+    surfaceCreateInfo.hwnd = m_pWinManager->GetWinHandle();
+    surfaceCreateInfo.hinstance = m_pWinManager->GetWinHInstance();
+
+    if (vkCreateWin32SurfaceKHR(m_vkInstance, &surfaceCreateInfo, nullptr, &m_vkSurface) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create window surface!");
+
+    LOG_SUCCESS("Vulkan surface created!");
+}
+
 void RenderManager::SelectPhysicalDevice()
 {
     LOG_WARNING("Looking for physical Device");
@@ -135,7 +149,7 @@ void RenderManager::SelectPhysicalDevice()
 void RenderManager::CreateLogicalDevice()
 {
     LOG_WARNING("Trying to Create Logical Device");
-    QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(m_vkPhysicalDevice);
+    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(m_vkPhysicalDevice);
     if (not desc.IsInitialized()) THROW_EXCEPTION_MSG("Not a suitable family desc");
 
     VkDeviceQueueCreateInfo queueCreateInfo{};
@@ -161,11 +175,8 @@ void RenderManager::CreateLogicalDevice()
 #endif
 
     if (vkCreateDevice(m_vkPhysicalDevice, &createInfo, nullptr, &m_vkDevice) != VK_SUCCESS)
-    {
         THROW_EXCEPTION_MSG("Failed to create logical device!");
-    }
 
     vkGetDeviceQueue(m_vkDevice, desc.GraphicsFamily.value(), 0, &m_vkGraphicsQueue);
-
     LOG_SUCCESS("Vulkan Device Created!");
 }

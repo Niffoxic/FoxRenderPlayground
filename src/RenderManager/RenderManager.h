@@ -26,6 +26,7 @@ private:
     //~ Initialize Vulkan
     bool InitVulkan();
     void CreateInstance();
+    void CreateSurface();
     void SelectPhysicalDevice();
     void CreateLogicalDevice();
 
@@ -38,6 +39,7 @@ private:
     VkPhysicalDevice            m_vkPhysicalDevice  { VK_NULL_HANDLE };
     VkDevice                    m_vkDevice          { VK_NULL_HANDLE };
     VkQueue                     m_vkGraphicsQueue   { VK_NULL_HANDLE };
+    VkSurfaceKHR                m_vkSurface         { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H
