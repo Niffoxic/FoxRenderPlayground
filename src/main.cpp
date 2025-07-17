@@ -2,11 +2,14 @@
 #include "RenderManager/RenderManager.h"
 #include "Logger/Logger.h"
 
-#include <iostream>
+#include "ExceptionHandler/IException.h"
 
+#include <iostream>
 
 int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
 {
+    UNREFERENCED_PARAMETER(hInstance);
+    UNREFERENCED_PARAMETER(hPrevInstance);
 
 #if defined(_DEBUG) || defined(ENABLE_TERMINAL)
     LOGGER_INIT_DESC logDesc{};
@@ -36,7 +39,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
 
             Sleep(1);
         }
-    } catch (const std::exception& e)
+    }
+    catch (const IException& e)
+    {
+        e.SaveCrashLog("CrashReport");
+        MessageBox(nullptr, e.what(), "Error", MB_OK);
+        return EXIT_FAILURE;
+    }
+    catch (const std::exception& e)
     {
         std::cerr << e.what() << '\n';
         return EXIT_FAILURE;

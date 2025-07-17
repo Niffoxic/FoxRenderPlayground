@@ -93,7 +93,7 @@ std::string Logger::GetTimestamp()
     localtime_s(&localTm, &timeT);
 
     std::ostringstream oss;
-    oss << std::put_time(&localTm, "%Y-%m-%d %H:%M:%S");
+    oss << std::put_time(&localTm, "%Y-%m-%d_%H-%M-%S");
     return oss.str();
 }
 

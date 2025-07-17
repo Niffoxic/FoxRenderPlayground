@@ -84,11 +84,12 @@ public:
         Get().Log(LogLevel::Print, std::format(fmt, std::forward<Args>(args)...));
     }
 
+    static std::string GetTimestamp();
+
 private:
     explicit Logger(const LOGGER_INIT_DESC& desc);
 
     void Log(LogLevel level, const std::string& msg);
-    static std::string GetTimestamp();
     void SetConsoleColor(LogLevel level) const;
     void EnableTerminal();
 

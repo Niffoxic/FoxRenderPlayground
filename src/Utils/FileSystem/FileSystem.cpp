@@ -3,7 +3,7 @@
 //
 
 #include "FileSystem.h"
-
+#include <ostream>
 
 bool FileSystem::OpenForRead(const std::string& path)
 {
