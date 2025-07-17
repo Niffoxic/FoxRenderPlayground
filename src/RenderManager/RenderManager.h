@@ -26,13 +26,15 @@ private:
     //~ Initialize Vulkan
     bool InitVulkan();
     void CreateInstance();
+    void SelectPhysicalDevice();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
 
     //~ Vulkan members
-    VkInstance m_vkInstance{ nullptr };
-    VkDebugUtilsMessengerEXT m_vkDebugMessenger{ nullptr };
+    VkInstance m_vkInstance{ VK_NULL_HANDLE };
+    VkDebugUtilsMessengerEXT m_vkDebugMessenger{ VK_NULL_HANDLE };
+    VkPhysicalDevice m_vkPhysicalDevice{ VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H

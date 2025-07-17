@@ -4,9 +4,10 @@
 
 #include "RenderManager.h"
 #include "Logger/Logger.h"
+#include "ExceptionHandler/IException.h"
 
 #include <stdexcept>
-#include "ExceptionHandler/IException.h"
+
 
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
@@ -58,6 +59,8 @@ bool RenderManager::InitVulkan()
 #if defined(DEBUG) || defined(_DEBUG)
     CreateDebugUtilsMessenger(m_vkInstance, m_vkDebugMessenger);
 #endif
+
+    SelectPhysicalDevice();
     return true;
 }
 
@@ -100,4 +103,28 @@ void RenderManager::CreateInstance()
         throw std::runtime_error("Failed to create instance.");
 
     LOG_SUCCESS("Vulkan Instance Created!");
+}
+
+void RenderManager::SelectPhysicalDevice()
+{
+    LOG_INFO("Looking for physical Device");
+    uint32_t deviceCount = 0;
+    vkEnumeratePhysicalDevices(m_vkInstance, &deviceCount, nullptr);
+    if (deviceCount == 0) THROW_EXCEPTION_MSG("No Physics Video Device Found!");
+
+    std::vector<VkPhysicalDevice> devices(deviceCount);
+    vkEnumeratePhysicalDevices(m_vkInstance, &deviceCount, devices.data());
+
+    //~ Selecting whatever is suitable I DONT GIVE A SHEEET
+    for (const auto& device : devices)
+    {
+        if (IsDeviceSuitable(device))
+        {
+            m_vkPhysicalDevice = device;
+            break;
+        }
+    }
+
+    if (m_vkPhysicalDevice == VK_NULL_HANDLE) THROW_EXCEPTION_MSG("Failed to find a suitable GPU!");
+    LOG_SUCCESS("Found a suitable GPU!");
 }

@@ -8,10 +8,12 @@
 #include <array>
 #include <vector>
 #include <vulkan/vulkan.h>
+#include <optional>
 
 #include "ExceptionHandler/WindowException.h"
 #include "Logger/Logger.h"
 
+#pragma region CONFIGURATION
 namespace Fox
 {
     inline constexpr std::array<const char*, 1> vkValidationLayers
@@ -38,6 +40,23 @@ namespace Fox
     inline constexpr auto vkRequiredInstanceExtensions = GetRequiredInstanceExtensions();
 }
 
+#pragma endregion
+
+#pragma region CUSTOM_DESCRIPTION
+
+typedef struct QUEUE_FAMILY_INDEX_DESC
+{
+    std::optional<uint32_t> GraphicsFamily;
+
+    bool IsInitialized() const
+    {
+        return GraphicsFamily.has_value();
+    }
+}QUEUE_FAMILY_INDEX_DESC;
+
+#pragma endregion
+
+#pragma region VULKAN_HELPERS
 inline void PrintAvailableInstanceExtensions()
 {
     uint32_t extensionCount = 0;
@@ -58,6 +77,36 @@ inline void PrintAvailableInstanceExtensions()
         LOG_PRINT("\t{}", extensionName);
     }
 }
+
+inline QUEUE_FAMILY_INDEX_DESC FindQueueFamily(VkPhysicalDevice device)
+{
+    QUEUE_FAMILY_INDEX_DESC desc{};
+
+    uint32_t queueFamilyCount = 0;
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, nullptr);
+
+    std::vector<VkQueueFamilyProperties> queueFamilies(queueFamilyCount);
+    vkGetPhysicalDeviceQueueFamilyProperties(device, &queueFamilyCount, queueFamilies.data());
+
+    int graphicsSupportedFamily = 0;
+    for (const auto& queueFamily : queueFamilies)
+    {
+        if ((queueFamily.queueFlags & VK_QUEUE_GRAPHICS_BIT) && not desc.IsInitialized())
+            desc.GraphicsFamily = graphicsSupportedFamily;
+
+        graphicsSupportedFamily++;
+    }
+
+    return desc;
+}
+
+inline bool IsDeviceSuitable(VkPhysicalDevice device)
+{
+    const QUEUE_FAMILY_INDEX_DESC desc = FindQueueFamily(device);
+    return desc.IsInitialized();
+}
+
+#pragma endregion
 
 #pragma region DEBUG_IMPL
 
