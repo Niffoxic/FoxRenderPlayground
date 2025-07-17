@@ -20,7 +20,15 @@ bool RenderManager::OnInit()
 
 bool RenderManager::OnRelease()
 {
+    //~ Clean Swap chain
+    for (auto& view: m_vkSwapChainImageViews)
+    {
+        vkDestroyImageView(m_vkDevice, view, nullptr);
+    }
+
     vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
+
+    //~ Clean Vulkan resources
     vkDestroyDevice(m_vkDevice, nullptr);
 
 #if defined(DEBUG) || defined(_DEBUG)
@@ -50,6 +58,7 @@ void RenderManager::OnFrameEnd()
 
 bool RenderManager::InitVulkan()
 {
+    //~ Init Vulkan
     CreateInstance();
     CreateSurface();
 
@@ -59,7 +68,11 @@ bool RenderManager::InitVulkan()
 
     SelectPhysicalDevice();
     CreateLogicalDevice();
+
+    //~ Init Swap chain
     CreateSwapChain();
+    CreateImageViews();
+
     return true;
 }
 
@@ -247,4 +260,37 @@ void RenderManager::CreateSwapChain()
     vkGetSwapchainImagesKHR(m_vkDevice, m_vkSwapChain, &imageCount, nullptr);
     m_vkSwapChainImages.resize(imageCount);
     vkGetSwapchainImagesKHR(m_vkDevice, m_vkSwapChain, &imageCount, m_vkSwapChainImages.data());
+}
+
+void RenderManager::CreateImageViews()
+{
+    LOG_WARNING("Attempting to create image views counts: {}", m_vkSwapChainImages.size());
+    m_vkSwapChainImageViews.resize(m_vkSwapChainImages.size());
+
+    for (size_t i = 0; i < m_vkSwapChainImages.size(); i++)
+    {
+        VkImageViewCreateInfo viewInfo{};
+        viewInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
+        viewInfo.image = m_vkSwapChainImages[i];
+        viewInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
+        viewInfo.format = m_descSwapChainSupportDetails.SurfaceFormat.format;
+
+        viewInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
+        viewInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
+        viewInfo.components.b = VK_COMPONENT_SWIZZLE_IDENTITY;
+        viewInfo.components.a = VK_COMPONENT_SWIZZLE_IDENTITY;
+
+        viewInfo.subresourceRange.aspectMask     = VK_IMAGE_ASPECT_COLOR_BIT;
+        viewInfo.subresourceRange.baseMipLevel   = 0;
+        viewInfo.subresourceRange.levelCount     = 1;
+        viewInfo.subresourceRange.baseArrayLayer = 0;
+        viewInfo.subresourceRange.layerCount     = 1;
+
+        if (vkCreateImageView(m_vkDevice, &viewInfo, nullptr, &m_vkSwapChainImageViews[i]) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed to create image views!");
+
+        LOG_INFO("[{}] added image views", i);
+    }
+
+    LOG_SUCCESS("Created all image views!");
 }

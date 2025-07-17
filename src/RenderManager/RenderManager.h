@@ -28,7 +28,10 @@ private:
     void CreateSurface();
     void SelectPhysicalDevice();
     void CreateLogicalDevice();
+
+    //~ Create Swap chain
     void CreateSwapChain();
+    void CreateImageViews();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -43,13 +46,14 @@ private:
     VkQueue                     m_vkPresentQueue    { VK_NULL_HANDLE };
 
     //~ Swap chain members
+    VkSwapchainKHR m_vkSwapChain { VK_NULL_HANDLE };
     struct
     {
         VkSurfaceFormatKHR SurfaceFormat;
-        VkExtent2D Extent;
-    } m_descSwapChainSupportDetails{};
-    VkSwapchainKHR              m_vkSwapChain       { VK_NULL_HANDLE };
-    std::vector<VkImage>        m_vkSwapChainImages {};
+        VkExtent2D         Extent;
+    } m_descSwapChainSupportDetails                  {};
+    std::vector<VkImage>     m_vkSwapChainImages     {};
+    std::vector<VkImageView> m_vkSwapChainImageViews {};
 };
 
 #endif //RENDERMANAGER_H
