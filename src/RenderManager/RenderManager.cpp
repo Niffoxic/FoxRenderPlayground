@@ -292,3 +292,8 @@ void RenderManager::CreateImageViews()
 
     LOG_SUCCESS("Created all image views!");
 }
+
+void RenderManager::CreateRenderPipeline()
+{
+
+}
