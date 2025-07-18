@@ -35,6 +35,9 @@ private:
     void CreateSwapChain();
     void CreateImageViews();
 
+    //~ Test Rendering TODO: Replace it with RenderQueue
+    void CreateRenderPipeline();
+
 private:
     WindowsManager* m_pWinManager{ nullptr };
 
