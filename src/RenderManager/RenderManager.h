@@ -23,6 +23,8 @@ public:
     void OnFramePresent() override;
     void OnFrameEnd()     override;
 
+    VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
+
 private:
     //~ Initialize Vulkan
     bool InitVulkan();
@@ -59,6 +61,10 @@ private:
     } m_descSwapChainSupportDetails                  {};
     std::vector<VkImage>     m_vkSwapChainImages     {};
     std::vector<VkImageView> m_vkSwapChainImageViews {};
+
+    // TODO: Remove it later its only for test
+    VkShaderModule m_shaderTestCubeVert { VK_NULL_HANDLE };
+    VkShaderModule m_shaderTestCubeFrag { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H

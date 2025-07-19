@@ -56,6 +56,21 @@ void RenderManager::OnFrameEnd()
 
 }
 
+VkShaderModule RenderManager::CreateShaderModule(const std::vector<char>& code) const
+{
+    VkShaderModuleCreateInfo createInfo{};
+    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.codeSize = code.size();
+    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+
+    VkShaderModule shaderModule;
+
+    if (vkCreateShaderModule(m_vkDevice, &createInfo, nullptr, &shaderModule) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create shader module!");
+
+    return shaderModule;
+}
+
 bool RenderManager::InitVulkan()
 {
     //~ Init Vulkan
@@ -72,6 +87,9 @@ bool RenderManager::InitVulkan()
     //~ Init Swap chain
     CreateSwapChain();
     CreateImageViews();
+
+    //~ TODO: Only For Test replace with Spatial structure
+    CreateRenderPipeline();
 
     return true;
 }
@@ -295,5 +313,32 @@ void RenderManager::CreateImageViews()
 
 void RenderManager::CreateRenderPipeline()
 {
+    LOG_WARNING("Attempting to Create Render Pipeline");
+    //~ Only for test
+    auto vertCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle-vert.spv");
+    auto fragCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle-frag.spv");
 
+    m_shaderTestCubeVert = CreateShaderModule(vertCode);
+    m_shaderTestCubeFrag = CreateShaderModule(fragCode);
+
+    //~ Config Vertex Shader
+    VkPipelineShaderStageCreateInfo vertStageInfo{};
+    vertStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    vertStageInfo.stage = VK_SHADER_STAGE_VERTEX_BIT;
+    vertStageInfo.module = m_shaderTestCubeVert;
+    vertStageInfo.pName = "main";
+
+    //~ Config Frag Shader
+    VkPipelineShaderStageCreateInfo fragStageInfo{};
+    fragStageInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO;
+    fragStageInfo.stage = VK_SHADER_STAGE_FRAGMENT_BIT;
+    fragStageInfo.module = m_shaderTestCubeFrag;
+    fragStageInfo.pName = "main";
+
+    VkPipelineShaderStageCreateInfo shaderStages[] = {vertStageInfo, fragStageInfo};
+
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
+
+    LOG_SUCCESS("Created Render Pipeline!");
 }
