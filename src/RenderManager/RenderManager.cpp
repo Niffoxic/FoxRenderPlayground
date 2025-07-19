@@ -21,6 +21,8 @@ bool RenderManager::OnInit()
 bool RenderManager::OnRelease()
 {
     //~ Clear Render Related stuff
+    for (const auto framebuffer : m_vkSwapChainFramebuffers)
+        vkDestroyFramebuffer(m_vkDevice, framebuffer, nullptr);
 
     vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
     vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
@@ -43,7 +45,6 @@ bool RenderManager::OnRelease()
 
     vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
     vkDestroyInstance(m_vkInstance, nullptr);
-
     return true;
 }
 
@@ -97,6 +98,7 @@ bool RenderManager::InitVulkan()
     //~ TODO: Only For Test replace with Spatial structure
     CreateRenderPass();
     CreateRenderPipeline();
+    CreateFramebuffers();
     return true;
 }
 
@@ -480,4 +482,30 @@ void RenderManager::CreateRenderPipeline()
         THROW_EXCEPTION_MSG("Failed creating graphics pipeline");
 
     LOG_SUCCESS("Graphics Pipeline Created");
+}
+
+void RenderManager::CreateFramebuffers()
+{
+    LOG_WARNING("Attempting to create frame buffers");
+    m_vkSwapChainFramebuffers.resize(m_vkSwapChainImageViews.size());
+
+    for (size_t i = 0; i < m_vkSwapChainImageViews.size(); i++)
+    {
+        const VkImageView attachments[]{ m_vkSwapChainImageViews[i] };
+
+        VkFramebufferCreateInfo framebufferInfo{};
+        framebufferInfo.sType           = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.renderPass      = m_vkRenderPass;
+        framebufferInfo.attachmentCount = ARRAYSIZE(attachments);
+        framebufferInfo.pAttachments    = attachments;
+        framebufferInfo.height          = m_descSwapChainSupportDetails.Extent.height;
+        framebufferInfo.width           = m_descSwapChainSupportDetails.Extent.width;
+        framebufferInfo.layers          = 1;
+
+        if (vkCreateFramebuffer(m_vkDevice,
+            &framebufferInfo, nullptr, &m_vkSwapChainFramebuffers[i]) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed creating framebuffer");
+    }
+
+    LOG_SUCCESS("Framebuffer Created Counts: {}", m_vkSwapChainFramebuffers.size());
 }

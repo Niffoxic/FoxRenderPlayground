@@ -40,6 +40,7 @@ private:
     //~ Test Rendering TODO: Replace it with RenderQueue
     void CreateRenderPass();
     void CreateRenderPipeline();
+    void CreateFramebuffers();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -59,16 +60,20 @@ private:
     {
         VkSurfaceFormatKHR SurfaceFormat;
         VkExtent2D         Extent;
-    } m_descSwapChainSupportDetails                  {};
-    std::vector<VkImage>     m_vkSwapChainImages     {};
-    std::vector<VkImageView> m_vkSwapChainImageViews {};
+    } m_descSwapChainSupportDetails{};
+
+    std::vector<VkImage>       m_vkSwapChainImages      {};
+    std::vector<VkImageView>   m_vkSwapChainImageViews  {};
+    std::vector<VkFramebuffer> m_vkSwapChainFramebuffers{};
 
     // TODO: Remove it later its only for test
     VkRenderPass     m_vkRenderPass      { VK_NULL_HANDLE };
     VkPipelineLayout m_vkPipelineLayout  { VK_NULL_HANDLE };
-    VkPipeline       m_vkGraphicsPipeline { VK_NULL_HANDLE };
+    VkPipeline       m_vkGraphicsPipeline{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
+
+
 };
 
 #endif //RENDERMANAGER_H
