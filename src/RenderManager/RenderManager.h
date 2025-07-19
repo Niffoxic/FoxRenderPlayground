@@ -24,6 +24,7 @@ public:
     void OnFrameEnd()     override;
 
     VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
+    void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
 
 private:
     //~ Initialize Vulkan
@@ -43,7 +44,7 @@ private:
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateCommandBuffers();
-    void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
+    void CreateSyncObjects();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -77,6 +78,11 @@ private:
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
     VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
     VkCommandBuffer  m_vkCommandBuffer   { VK_NULL_HANDLE };
+
+    //~ Sync
+    VkSemaphore m_threadImageAvailableSemaphore{ VK_NULL_HANDLE };
+    VkSemaphore m_threadRenderFinishedSemaphore{ VK_NULL_HANDLE };
+    VkFence     m_threadInFlightFences         { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H
