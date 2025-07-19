@@ -7,6 +7,7 @@
 
 #include "Common/DefineWindows.h"
 #include <string>
+#include <vector>
 
 typedef struct FILE_PATH_INFO
 {
@@ -50,6 +51,7 @@ public:
 
 	static bool CopyFiles(const std::string& source, const std::string& destination, bool overwrite = true);
 	static bool MoveFiles(const std::string& source, const std::string& destination);
+	static std::vector<char> ReadFromFile(const std::string& fileName);
 
 	static DIRECTORY_AND_FILE_NAME SplitPathFile(const std::string& fullPath);
 

@@ -3,6 +3,7 @@
 //
 
 #include "FileSystem.h"
+#include "ExceptionHandler/IException.h"
 #include <ostream>
 
 bool FileSystem::OpenForRead(const std::string& path)
@@ -183,4 +184,50 @@ bool FileSystem::MoveFiles(const std::string& source, const std::string& destina
 	}
 
 	return MoveFile(source.c_str(), destination.c_str());
+}
+
+std::vector<char> FileSystem::ReadFromFile(const std::string &fileName)
+{
+	HANDLE file = CreateFile(
+			fileName.c_str(),
+			GENERIC_READ,
+			FILE_SHARE_READ,
+			nullptr,
+			OPEN_EXISTING,
+			FILE_ATTRIBUTE_NORMAL,
+			nullptr
+		);
+
+	if (file == INVALID_HANDLE_VALUE) THROW_EXCEPTION_MSG("Failed to open file: {}", fileName);
+
+	LARGE_INTEGER fileSize{};
+	if (!GetFileSizeEx(file, &fileSize))
+	{
+		CloseHandle(file);
+		THROW_EXCEPTION_MSG("Failed to get file size: {}", fileName);
+	}
+
+	if (fileSize.QuadPart > SIZE_MAX)
+	{
+		CloseHandle(file);
+		THROW_EXCEPTION_MSG("File too large to read into memory.");
+	}
+
+	std::vector<char> buffer(static_cast<size_t>(fileSize.QuadPart));
+
+	DWORD bytesRead = 0;
+	if (!ReadFile(file, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesRead, nullptr))
+	{
+		CloseHandle(file);
+		THROW_EXCEPTION_MSG("Failed to read file: {}", fileName);
+	}
+
+	if (bytesRead != buffer.size())
+	{
+		CloseHandle(file);
+		THROW_EXCEPTION_MSG("Read size mismatch.");
+	}
+
+	CloseHandle(file);
+	return buffer;
 }
