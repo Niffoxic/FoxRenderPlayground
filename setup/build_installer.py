@@ -19,12 +19,26 @@ def download_with_headers(url: str, dest_path: str):
     with urllib.request.urlopen(req) as response, open(dest_path, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
 
+def read_cmake_paths(path: str = "../build/resource_paths.txt") -> dict:
+    print("Reading cmake paths...")
+    print("Current Directory:", os.getcwd())
+    print("Target Path (relative):", path)
+    print("Target Path (absolute):", os.path.abspath(path))
+
+    if not os.path.exists(path):
+        raise FileNotFoundError(f"CMake path file not found: {os.path.abspath(path)}")
+
+    with open(path, "r") as f:
+        return dict(line.strip().split("=", 1) for line in f if "=" in line)
 
 class InstallerTask(ABC):
     def __init__(self):
         self.items_to_install: Dict[str, bool] = {} # item name and detected[false for not and true for hell yea]
         self.label = None
         self._populate_items()
+
+    def prepare_for_install(self):
+        pass
 
     def set_label(self, label: CTkLabel):
         self.label = label
@@ -270,16 +284,26 @@ class CMakeBuilder(InstallerTask):
 
 class CompileShader(InstallerTask):
     def __init__(self):
-        self.shader_root_path = "C:\\Users\\niffo\\Desktop\\NiffoxicRepo\\FoxRenderEngine\\shaders"
-        self.shaders_path: Dict[str, str] = {}  # name -> path
-        self.output_dir = os.path.join(self.shader_root_path, "compiled_shaders")
-        os.makedirs(self.output_dir, exist_ok=True)
+        self.output_dir = None
+        self.cmake_paths = None
+        self.shaders_path: Dict[str, str] = {}
         super().__init__()
 
+    def prepare_for_install(self):
+        self.cmake_paths = read_cmake_paths()
+        self._lazy_populate()
+        self.output_dir = os.path.join(self.cmake_paths["OUTPUT_BASE"], "compiled_shaders")
+        os.makedirs(self.output_dir, exist_ok=True)
+
     def set_option_widget(self, parent_frame: CTkFrame):
-        pass
+            pass
 
     def _populate_items(self):
+        pass
+
+    def _lazy_populate(self):
+        print("populating shaders")
+        self.shader_root_path = os.path.join(self.cmake_paths["PROJECT_SOURCE"], "shaders")
         for dirpath, _, filenames in os.walk(self.shader_root_path):
             for file in filenames:
                 if file.endswith(".vert") or file.endswith(".frag"):
@@ -325,7 +349,6 @@ class CompileShader(InstallerTask):
             msg = f"Failed to compile {name}:\n{e.stderr}"
             self._log(msg)
 
-
 class InstallerUI:
     def __init__(self):
         self.install_queue = []
@@ -346,6 +369,9 @@ class InstallerUI:
             "Vulkan SDK": VulkanInstaller(),
             "CMake": CMakeBuilder(),
             "Shaders": CompileShader()
+        }
+        self.dependencies: Dict[InstallerTask, List[InstallerTask]] = {
+            self.things_to_install["CMake"]: [self.things_to_install["Shaders"]]
         }
 
     def run(self):
@@ -419,9 +445,31 @@ class InstallerUI:
                 val.install(label_name)
                 self.content_frame.get_frame().after(0, lambda l=label_widget, name=label_name:
                 l.configure(text=f"• {name} (installed ✅)"))
+
+                if isinstance(val, CMakeBuilder):
+                    self._start_dependents_after_cmake()
+
             self.content_frame.get_frame().after(0, self._on_install_finished)
 
         threading.Thread(target=worker, daemon=True).start()
+
+    def _start_dependents_after_cmake(self):
+        def dependent_worker():
+            cmake = self.things_to_install["CMake"]
+            for dependent in self.dependencies.get(cmake, []):
+                dependent.prepare_for_install()
+                for label_name in dependent.get_content():
+                    if not dependent.is_detected(label_name):
+                        label_widget = self.content_frame.add_scroll_label(f"• {label_name} (pending)")
+                        dependent.set_label(label_widget)
+
+                        self.content_frame.get_frame().after(0, lambda l=label_widget, name=label_name:
+                        l.configure(text=f"• {name} (installing...)"))
+                        dependent.install(label_name)
+                        self.content_frame.get_frame().after(0, lambda l=label_widget, name=label_name:
+                        l.configure(text=f"• {name} (installed ✅)"))
+
+        threading.Thread(target=dependent_worker, daemon=True).start()
 
     def _on_install_finished(self):
         self.finish_button.configure(state="normal")

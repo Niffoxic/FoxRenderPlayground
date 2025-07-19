@@ -1,10 +1,25 @@
-# Source Cmake
-include(FetchContent)
+# Build Location
+set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
+set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine")
 
-# bro if you dont have vulkan installed I'm not gonna automate it!, too much work (DO IT MANUALLY AND BY YOURSELF)
+file(WRITE "${CMAKE_BINARY_DIR}/resource_paths.txt"
+        "OUTPUT_BASE=${OUTPUT_BASE}\n"
+        "PROJECT_SOURCE=${PROJECT_SOURCE}\n"
+)
+
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}")
+set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}")
+
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}/libs/Debug")
+set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
+
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}/libs/Debug")
+set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
+
 find_package(Vulkan REQUIRED)
 
 # ========================= Link Imgui =========================
+include(FetchContent)
 FetchContent_Declare(
         imgui
         GIT_REPOSITORY https://github.com/ocornut/imgui.git
@@ -35,6 +50,12 @@ file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/*.h
 )
 add_executable(application WIN32 main.cpp ${SOURCE_FILES})
+
+# Rename executable based on build type
+set_target_properties(application PROPERTIES
+        OUTPUT_NAME_DEBUG "engine-debug"
+        OUTPUT_NAME_RELEASE "engine"
+)
 
 # Labour Stuff hehehe
 target_link_libraries(application PRIVATE Vulkan::Vulkan)
