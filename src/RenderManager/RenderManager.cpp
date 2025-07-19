@@ -21,6 +21,11 @@ bool RenderManager::OnInit()
 bool RenderManager::OnRelease()
 {
     //~ Clear Render Related stuff
+
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
+
+    vkDestroyPipeline(m_vkDevice, m_vkGraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
     vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
 
@@ -449,8 +454,30 @@ void RenderManager::CreateRenderPipeline()
     if (vkCreatePipelineLayout(m_vkDevice, &pipelineLayoutInfo, nullptr, &m_vkPipelineLayout) != VK_SUCCESS)
         THROW_EXCEPTION_MSG("Failed To Create Test pipeline Layout");
 
-    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
-    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
-
     LOG_SUCCESS("Pipeline Layout Created!");
+    LOG_WARNING("Attempting to create Graphics Pipeline");
+
+    VkGraphicsPipelineCreateInfo pipelineInfo{};
+    pipelineInfo.sType                  = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
+    pipelineInfo.stageCount             = ARRAYSIZE(shaderStages);
+    pipelineInfo.pStages                = shaderStages;
+    pipelineInfo.pVertexInputState      = &vertexInputInfo;
+    pipelineInfo.pInputAssemblyState    = &inputAssembly;
+    pipelineInfo.pViewportState         = &viewportState;
+    pipelineInfo.pRasterizationState    = &rasterizationState;
+    pipelineInfo.pMultisampleState      = &msaa;
+    pipelineInfo.pColorBlendState       = &colorBlendState;
+    pipelineInfo.pDynamicState          = &dynamicState;
+    pipelineInfo.pDepthStencilState     = nullptr;
+    pipelineInfo.layout                 = m_vkPipelineLayout;
+    pipelineInfo.renderPass             = m_vkRenderPass;
+    pipelineInfo.subpass                = 0;
+    pipelineInfo.basePipelineHandle     = VK_NULL_HANDLE;
+    pipelineInfo.basePipelineIndex      = -1;
+
+    if (vkCreateGraphicsPipelines(m_vkDevice, VK_NULL_HANDLE,
+        1, &pipelineInfo, nullptr, &m_vkGraphicsPipeline) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed creating graphics pipeline");
+
+    LOG_SUCCESS("Graphics Pipeline Created");
 }

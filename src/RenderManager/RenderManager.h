@@ -66,6 +66,7 @@ private:
     // TODO: Remove it later its only for test
     VkRenderPass     m_vkRenderPass      { VK_NULL_HANDLE };
     VkPipelineLayout m_vkPipelineLayout  { VK_NULL_HANDLE };
+    VkPipeline       m_vkGraphicsPipeline { VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
 };
