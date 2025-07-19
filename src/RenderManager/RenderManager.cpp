@@ -22,11 +22,11 @@ bool RenderManager::OnRelease()
 {
     //~ Clear Render Related stuff
     vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
+    vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
+
     //~ Clean Swap chain
     for (auto& view: m_vkSwapChainImageViews)
         vkDestroyImageView(m_vkDevice, view, nullptr);
-
-
     vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
 
     //~ Clean Vulkan resources
@@ -90,8 +90,8 @@ bool RenderManager::InitVulkan()
     CreateImageViews();
 
     //~ TODO: Only For Test replace with Spatial structure
+    CreateRenderPass();
     CreateRenderPipeline();
-
     return true;
 }
 
@@ -310,6 +310,41 @@ void RenderManager::CreateImageViews()
     }
 
     LOG_SUCCESS("Created all image views!");
+}
+
+void RenderManager::CreateRenderPass()
+{
+    LOG_INFO("Attempting to create render pass...");
+    VkAttachmentDescription colorAttachments{};
+    colorAttachments.format         = m_descSwapChainSupportDetails.SurfaceFormat.format;
+    colorAttachments.samples        = VK_SAMPLE_COUNT_1_BIT;
+    colorAttachments.loadOp         = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    colorAttachments.storeOp        = VK_ATTACHMENT_STORE_OP_STORE;
+    colorAttachments.initialLayout  = VK_IMAGE_LAYOUT_UNDEFINED;
+    colorAttachments.finalLayout    = VK_IMAGE_LAYOUT_PRESENT_SRC_KHR;
+    colorAttachments.stencilLoadOp  = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    colorAttachments.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+
+    VkAttachmentReference colorAttachmentReference{};
+    colorAttachmentReference.attachment = 0;
+    colorAttachmentReference.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
+
+    VkSubpassDescription subpass{};
+    subpass.pipelineBindPoint       = VK_PIPELINE_BIND_POINT_GRAPHICS;
+    subpass.colorAttachmentCount    = 1;
+    subpass.pColorAttachments       = &colorAttachmentReference;
+
+    VkRenderPassCreateInfo renderPassInfo{};
+    renderPassInfo.sType            = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount  = 1;
+    renderPassInfo.subpassCount     = 1;
+    renderPassInfo.pAttachments     = &colorAttachments;
+    renderPassInfo.pSubpasses       = &subpass;
+
+    if (vkCreateRenderPass(m_vkDevice, &renderPassInfo, nullptr, &m_vkRenderPass) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create render pass!");
+
+    LOG_INFO("Created render pass!");
 }
 
 void RenderManager::CreateRenderPipeline()

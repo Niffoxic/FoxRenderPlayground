@@ -38,6 +38,7 @@ private:
     void CreateImageViews();
 
     //~ Test Rendering TODO: Replace it with RenderQueue
+    void CreateRenderPass();
     void CreateRenderPipeline();
 
 private:
@@ -63,6 +64,7 @@ private:
     std::vector<VkImageView> m_vkSwapChainImageViews {};
 
     // TODO: Remove it later its only for test
+    VkRenderPass     m_vkRenderPass      { VK_NULL_HANDLE };
     VkPipelineLayout m_vkPipelineLayout  { VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
