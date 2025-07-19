@@ -105,20 +105,24 @@ class ContentFrame:
         self.gif_running = False
         self.scroll_area = None
 
+    def get_frame(self):
+        return self.frame
+
     def add_scroll_area(self, height=180) -> CTkScrollableFrame:
         if self.scroll_area:
             self.scroll_area.destroy()
 
-        self.scroll_area = CTkScrollableFrame(self.frame, height=height, fg_color="transparent")
+        self.scroll_area = CTkScrollableFrame(self.frame, height=height, fg_color="transparent", corner_radius=0)
         self.scroll_area.pack(fill="both", expand=False, padx=20, pady=10)
         return self.scroll_area
 
-    def add_scroll_label(self, text: str, font=("Segoe UI", 14), anchor="w"):
+    def add_scroll_label(self, text: str, font=("Segoe UI", 14), anchor="w") -> CTkLabel:
         if not self.scroll_area:
             self.add_scroll_area()
 
-        label = CTkLabel(self.scroll_area, text=text, font=font, anchor=anchor, justify="left")
-        label.pack(anchor=anchor, pady=5)
+        label = CTkLabel(self.scroll_area, text=text, font=font, anchor="w", justify="left", height=10)
+        label.pack(fill="x", expand=False, padx=0, pady=0)
+        return label
 
     def add_scroll_checkbox(self, text: str):
         if not self.scroll_area:
