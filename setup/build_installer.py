@@ -1,14 +1,24 @@
 from abc import ABC, abstractmethod
 from typing import Dict, List
-
-from installer.install_gui import InstallerApplication, FadeDirection, ContentFrame, CTkLabel
+from installer.install_gui import InstallerApplication, FadeDirection, CTkFrame, CTkLabel, CTkComboBox
 import os
 import threading
 import subprocess
 import urllib.request
 import tempfile
 import shutil
+import psutil
 from time import sleep
+
+
+def download_with_headers(url: str, dest_path: str):
+    req = urllib.request.Request(
+        url,
+        headers={"User-Agent": "Mozilla/5.0"}  # Pretend we’re a browser
+    )
+    with urllib.request.urlopen(req) as response, open(dest_path, 'wb') as out_file:
+        shutil.copyfileobj(response, out_file)
+
 
 class InstallerTask(ABC):
     def __init__(self):
@@ -18,6 +28,9 @@ class InstallerTask(ABC):
 
     def set_label(self, label: CTkLabel):
         self.label = label
+
+    def set_option_widget(self, parent_frame: CTkFrame):
+        pass
 
     @abstractmethod
     def _populate_items(self):
@@ -38,8 +51,16 @@ class InstallerTask(ABC):
         return self.items_to_install[name]
 
 
-class CMakeBuilder(InstallerTask):
+class VulkanInstaller(InstallerTask):
     def __init__(self):
+        self.installer_path = ""
+        self.versions_to_select_from: List[str] = [
+            "1.3.275.0",
+            "1.3.296.0",
+            "1.4.315.0",
+            "1.4.321.1"
+        ]
+        self.vulkan_version = "1.3.296.0"
         super().__init__()
 
     def _log(self, text: str):
@@ -47,6 +68,124 @@ class CMakeBuilder(InstallerTask):
             self.label.configure(text=text)
         else:
             print(text)
+
+    def _populate_items(self):
+        detected = self._is_vulkan_installed()
+        self.items_to_install["Vulkan SDK"] = detected
+
+    def _is_vulkan_installed(self) -> bool:
+        return "VULKAN_SDK" in os.environ
+
+    def set_option_widget(self, parent_frame: CTkFrame):
+        from customtkinter import CTkLabel, CTkComboBox
+
+        row = CTkFrame(parent_frame, fg_color="transparent")
+        row.pack(fill="x", padx=10, pady=2)
+
+        label = CTkLabel(row, text="Vulkan Version:")
+        label.pack(side="left")
+
+        combo = CTkComboBox(row, values=self.versions_to_select_from, width=120)
+        combo.set(self.vulkan_version)
+        combo.pack(side="left", padx=10)
+
+        def on_change(choice):
+            self.vulkan_version = choice
+            print("Selected Vulkan version:", self.vulkan_version)
+
+        combo.configure(command=on_change)
+
+    def install(self, name: str) -> None:
+        if name != "Vulkan SDK":
+            return
+
+        if self._is_vulkan_installed():
+            self._log("Vulkan SDK is already installed.")
+            return
+
+        self._log(f"Installing Vulkan SDK {self.vulkan_version}...")
+
+        try:
+            major, minor, *_ = self.vulkan_version.split(".")
+            minor = int(minor)
+
+            if int(major) == 1 and minor >= 4:
+                url = f"https://sdk.lunarg.com/sdk/download/{self.vulkan_version}/windows/vulkansdk-windows-X64-{self.vulkan_version}.exe"
+            else:
+                url = f"https://sdk.lunarg.com/sdk/download/{self.vulkan_version}/windows/VulkanSDK-{self.vulkan_version}-Installer.exe"
+
+            install_dir = os.path.join("C:\\Tools")
+            os.makedirs(install_dir, exist_ok=True)
+
+            self.installer_path = os.path.join(install_dir, os.path.basename(url))
+            self._log(f"Downloading Vulkan installer to {self.installer_path}...")
+
+            if os.path.exists(self.installer_path):
+                os.remove(self.installer_path)
+
+            download_with_headers(url, self.installer_path)
+            self._log("Download completed.")
+
+            self._log("Running Vulkan installer...")
+            subprocess.Popen([self.installer_path])
+
+            self._log("Waiting for Vulkan installer to finish...")
+            waited_seconds = 0
+            max_wait = 600  # 10 min max
+
+            while waited_seconds < max_wait:
+                active = any(
+                    "vulkan" in (p.info['name'] or "").lower()
+                    for p in psutil.process_iter(['name'])
+                )
+                if not active and self._is_vulkan_installed():
+                    break
+                sleep(1)
+                waited_seconds += 1
+
+            if self._is_vulkan_installed():
+                self.items_to_install["Vulkan SDK"] = True
+                self._log("Vulkan SDK installed successfully.")
+            else:
+                self.items_to_install["Vulkan SDK"] = False
+                self._log("⚠Vulkan SDK may require restart to complete installation.")
+
+        except Exception as e:
+            self._log(f"Vulkan install failed: {e}")
+            self.items_to_install["Vulkan SDK"] = False
+
+        finally:
+            if os.path.exists(self.installer_path):
+                try:
+                    os.remove(self.installer_path)
+                except:
+                    pass
+
+
+class CMakeBuilder(InstallerTask):
+    def __init__(self):
+        self.build_type = "Debug"
+        super().__init__()
+
+    def _log(self, text: str):
+        if self.label:
+            self.label.configure(text=text)
+        else:
+            print(text)
+
+    def set_option_widget(self, parent_frame: CTkFrame):
+        row = CTkFrame(parent_frame, fg_color="transparent")
+        row.pack(fill="x", padx=10, pady=2)
+
+        label = CTkLabel(row, text="Build Type:")
+        label.pack(side="left")
+
+        combo = CTkComboBox(row, values=["Debug", "Release"], width=100)
+        combo.set(self.build_type)
+        combo.pack(side="left", padx=10)
+        def on_change(choice):
+            self.build_type = choice
+        combo.configure(command=on_change)
 
     def _populate_items(self):
         # Always add it so we can "install" (which includes build)
@@ -104,26 +243,37 @@ class CMakeBuilder(InstallerTask):
     def _build_project(self):
         project_root = os.path.abspath(os.path.join(os.getcwd(), ".."))
         build_dir = os.path.join(project_root, "build")
+        build_type = getattr(self, "build_type", "Debug")
 
         try:
-            self._log("🛠️ Building project...")
+            self._log("Starting project build...")
             os.makedirs(build_dir, exist_ok=True)
 
-            result = subprocess.run(["cmake", ".."], cwd=build_dir, capture_output=True, text=True)
+            # Step 1: Configure
+            self._log(f"Configuring CMake with build type: {build_type}")
+            cmake_config_cmd = ["cmake", "..", f"-DCMAKE_BUILD_TYPE={build_type}"]
+            self._log(f"Running: {' '.join(cmake_config_cmd)}")
+
+            result = subprocess.run(cmake_config_cmd, cwd=build_dir, capture_output=True, text=True)
             if result.returncode != 0:
                 self._log("CMake configure failed:\n" + result.stderr)
                 return
-
             self._log("CMake configured successfully.")
 
-            result = subprocess.run(["cmake", "--build", "."], cwd=build_dir, capture_output=True, text=True)
+            # Step 2: Build
+            cmake_build_cmd = ["cmake", "--build", ".", "--config", build_type]
+            self._log(f"Running: {' '.join(cmake_build_cmd)}")
+
+            result = subprocess.run(cmake_build_cmd, cwd=build_dir, capture_output=True, text=True)
             if result.returncode != 0:
-                self._log("❌ CMake build failed:\n" + result.stderr)
+                self._log("CMake build failed:\n" + result.stderr)
                 return
+
             self._log("Project built successfully.")
 
         except Exception as e:
-            self._log(f"Error during build: {e}")
+            self._log(f"Exception during build: {e}")
+
 
 class CompileShader(InstallerTask):
     def __init__(self):
@@ -144,6 +294,7 @@ class CompileShader(InstallerTask):
         sleep(2)
         self.items_to_install[name] = True
 
+
 class InstallerUI:
     def __init__(self):
         self.install_queue = []
@@ -161,6 +312,7 @@ class InstallerUI:
         self.home_page()
 
         self.things_to_install: Dict[str, InstallerTask] = {
+            "Vulkan SDK": VulkanInstaller(),
             "CMake": CMakeBuilder(),
             "Shaders": CompileShader()
         }
@@ -192,6 +344,7 @@ class InstallerUI:
                     self.content_frame.add_scroll_label(f"• {label} (detected ✅)")
                 else:
                     self.content_frame.add_scroll_label(f"• {label} (not found ❌)")
+                    val.set_option_widget(scroll_area)
 
         previous_button = self.content_frame.add_button("Previous", callback=self.home_page)
         previous_button.place(relx=0.0, rely=1.0, anchor="sw", x=20, y=-20)
