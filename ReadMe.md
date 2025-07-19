@@ -20,18 +20,14 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 
 ## Build Instructions
 
-### CMake Options 
-`-DENABLE_TERMINAL=ON|OFF`
-Enables or disables the debug terminal.
-* ON: Shows a debug console during execution.
-* OFF: Disables the console window.
-* Note: In Release mode, even with `ON`, 
-  only essential execution logs will be shown.
+> Recommended: Use the GUI installer for first-time setup. It handles everything — installing CMake (if missing), Vulkan SDK, compiling shaders, and building the project.
+
+### 🔄 Quick Start with GUI Installer
 
 ```bash
-git clone https://github.com/Niffoxic/FoxRenderEngine.git
-cd FoxRenderEngine
-mkdir build && cd build
-cmake ..
-cmake --build .
+cd FoxRenderEngine/setup
+pip install -r requirements.txt
+python main.py
 ```
+
+`Note: I will update how to build it without gui installer just in case if anyone don't trust me with .exe file XD (I will do it later tho I gotta go back to the main vulkan stuff`
