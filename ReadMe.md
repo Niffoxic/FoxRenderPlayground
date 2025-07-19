@@ -29,7 +29,7 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 ```bash
 cd FoxRenderEngine/setup
 pip install -r requirements.txt
-python main.py
+python build_installer.py
 ```
 
 `Note: I will update how to build it without gui installer just in case if anyone don't trust me with .exe file XD (I will do it later tho I gotta go back to the main vulkan stuff`
