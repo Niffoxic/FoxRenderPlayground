@@ -50,6 +50,11 @@ class InstallerTask(ABC):
             return False
         return self.items_to_install[name]
 
+    def _log(self, text: str):
+        if self.label:
+            self.label.configure(text=text)
+        else:
+            print(text)
 
 class VulkanInstaller(InstallerTask):
     def __init__(self):
@@ -62,12 +67,6 @@ class VulkanInstaller(InstallerTask):
         ]
         self.vulkan_version = "1.3.296.0"
         super().__init__()
-
-    def _log(self, text: str):
-        if self.label:
-            self.label.configure(text=text)
-        else:
-            print(text)
 
     def _populate_items(self):
         detected = self._is_vulkan_installed()
@@ -166,12 +165,6 @@ class CMakeBuilder(InstallerTask):
     def __init__(self):
         self.build_type = "Debug"
         super().__init__()
-
-    def _log(self, text: str):
-        if self.label:
-            self.label.configure(text=text)
-        else:
-            print(text)
 
     def set_option_widget(self, parent_frame: CTkFrame):
         row = CTkFrame(parent_frame, fg_color="transparent")
@@ -277,9 +270,14 @@ class CMakeBuilder(InstallerTask):
 
 class CompileShader(InstallerTask):
     def __init__(self):
-        self.shader_root_path = "C:\\Users\\niffo\Desktop\\NiffoxicRepo\\FoxRenderEngine\\shaders"
+        self.shader_root_path = "C:\\Users\\niffo\\Desktop\\NiffoxicRepo\\FoxRenderEngine\\shaders"
         self.shaders_path: Dict[str, str] = {}  # name -> path
+        self.output_dir = os.path.join(self.shader_root_path, "compiled_shaders")
+        os.makedirs(self.output_dir, exist_ok=True)
         super().__init__()
+
+    def set_option_widget(self, parent_frame: CTkFrame):
+        pass
 
     def _populate_items(self):
         for dirpath, _, filenames in os.walk(self.shader_root_path):
@@ -290,9 +288,42 @@ class CompileShader(InstallerTask):
                     self.shaders_path[file] = full_path
 
     def install(self, name: str):
-        print(f"Installing {name} from {self.shaders_path[name]}")
-        sleep(2)
-        self.items_to_install[name] = True
+        shader_path = self.shaders_path.get(name)
+        if not shader_path:
+            msg = f"Shader path not found for {name}"
+            self._log(msg)
+            return
+
+        output_filename = name.replace(".", "-") + ".spv"
+        output_path = os.path.join(self.output_dir, output_filename)
+
+        # Get Vulkan SDK env path
+        vulkan_sdk = os.environ.get("VULKAN_SDK")
+        if not vulkan_sdk:
+            msg = "VULKAN_SDK environment variable not set. Vulkan SDK might not be installed."
+            self._log(msg)
+            return
+
+        glslc_path = os.path.join(vulkan_sdk, "Bin", "glslc.exe")
+        if not os.path.exists(glslc_path):
+            msg = f"glslc not found at {glslc_path}"
+            self._log(msg)
+            return
+        self._log(f"Compiling {name}...")
+
+        try:
+            result = subprocess.run(
+                [glslc_path, shader_path, "-o", output_path],
+                capture_output=True,
+                text=True,
+                check=True
+            )
+            self.items_to_install[name] = True
+            msg = f"Compiled {name} to {output_filename}"
+            self._log(msg)
+        except subprocess.CalledProcessError as e:
+            msg = f"Failed to compile {name}:\n{e.stderr}"
+            self._log(msg)
 
 
 class InstallerUI:
