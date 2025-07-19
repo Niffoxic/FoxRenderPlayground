@@ -33,3 +33,5 @@ python build_installer.py
 ```
 
 `Note: I will update how to build it without gui installer just in case if anyone don't trust me with .exe file XD (I will do it later tho I gotta go back to the main vulkan stuff`
+
+This project is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
