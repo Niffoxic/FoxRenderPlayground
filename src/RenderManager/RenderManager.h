@@ -24,6 +24,7 @@ public:
     void OnFrameEnd()     override;
 
     VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
+    void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
 
 private:
     //~ Initialize Vulkan
@@ -40,6 +41,10 @@ private:
     //~ Test Rendering TODO: Replace it with RenderQueue
     void CreateRenderPass();
     void CreateRenderPipeline();
+    void CreateFramebuffers();
+    void CreateCommandPool();
+    void CreateCommandBuffers();
+    void CreateSyncObjects();
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -59,16 +64,25 @@ private:
     {
         VkSurfaceFormatKHR SurfaceFormat;
         VkExtent2D         Extent;
-    } m_descSwapChainSupportDetails                  {};
-    std::vector<VkImage>     m_vkSwapChainImages     {};
-    std::vector<VkImageView> m_vkSwapChainImageViews {};
+    } m_descSwapChainSupportDetails{};
+
+    std::vector<VkImage>       m_vkSwapChainImages      {};
+    std::vector<VkImageView>   m_vkSwapChainImageViews  {};
+    std::vector<VkFramebuffer> m_vkSwapChainFramebuffers{};
 
     // TODO: Remove it later its only for test
     VkRenderPass     m_vkRenderPass      { VK_NULL_HANDLE };
     VkPipelineLayout m_vkPipelineLayout  { VK_NULL_HANDLE };
-    VkPipeline       m_vkGraphicsPipeline { VK_NULL_HANDLE };
+    VkPipeline       m_vkGraphicsPipeline{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
+    VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
+    VkCommandBuffer  m_vkCommandBuffer   { VK_NULL_HANDLE };
+
+    //~ Sync
+    VkSemaphore m_threadImageAvailableSemaphore{ VK_NULL_HANDLE };
+    VkSemaphore m_threadRenderFinishedSemaphore{ VK_NULL_HANDLE };
+    VkFence     m_threadInFlightFences         { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H
