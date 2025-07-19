@@ -11,8 +11,8 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 ## Requirements
 
 - Windows 10/11
-- Vulkan SDK (1.3+)
-- CMake 3.20+
+- Vulkan SDK (1.3+) `note: can be downloaded with gui installer`
+- CMake 3.90+ `note: can be downloaded with gui installer`
 - Visual Studio 2019/2022 or MSVC toolchain
 - GPU with raytracing support (RTX 20xx+/RX 6000+ recommended)
 
@@ -23,6 +23,8 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 > Recommended: Use the GUI installer for first-time setup. It handles everything — installing CMake (if missing), Vulkan SDK, compiling shaders, and building the project.
 
 ### 🔄 Quick Start with GUI Installer
+
+![GUI Installer Preview](doc/installer-image.png)
 
 ```bash
 cd FoxRenderEngine/setup
