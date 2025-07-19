@@ -41,6 +41,9 @@ private:
     void CreateRenderPass();
     void CreateRenderPipeline();
     void CreateFramebuffers();
+    void CreateCommandPool();
+    void CreateCommandBuffers();
+    void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -72,8 +75,8 @@ private:
     VkPipeline       m_vkGraphicsPipeline{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
-
-
+    VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
+    VkCommandBuffer  m_vkCommandBuffer   { VK_NULL_HANDLE };
 };
 
 #endif //RENDERMANAGER_H

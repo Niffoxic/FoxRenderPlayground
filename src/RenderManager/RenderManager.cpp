@@ -21,6 +21,8 @@ bool RenderManager::OnInit()
 bool RenderManager::OnRelease()
 {
     //~ Clear Render Related stuff
+    vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
+
     for (const auto framebuffer : m_vkSwapChainFramebuffers)
         vkDestroyFramebuffer(m_vkDevice, framebuffer, nullptr);
 
@@ -99,6 +101,8 @@ bool RenderManager::InitVulkan()
     CreateRenderPass();
     CreateRenderPipeline();
     CreateFramebuffers();
+    CreateCommandPool();
+    CreateCommandBuffers();
     return true;
 }
 
@@ -431,10 +435,10 @@ void RenderManager::CreateRenderPipeline()
     colorBlendState.logicOp             = VK_LOGIC_OP_COPY;
     colorBlendState.attachmentCount     = 1;
     colorBlendState.pAttachments        = &colorBlendAttachment;
-    colorBlendState.blendConstants[0]   = 0.25f;
-    colorBlendState.blendConstants[1]   = 0.18f;
-    colorBlendState.blendConstants[2]   = 0.33f;
-    colorBlendState.blendConstants[3]   = 0.85f;
+    colorBlendState.blendConstants[0]   = 0.0f;
+    colorBlendState.blendConstants[1]   = 0.0f;
+    colorBlendState.blendConstants[2]   = 0.0f;
+    colorBlendState.blendConstants[3]   = 0.0f;
 
     std::vector<VkDynamicState> dynamicStates
     {
@@ -506,6 +510,83 @@ void RenderManager::CreateFramebuffers()
             &framebufferInfo, nullptr, &m_vkSwapChainFramebuffers[i]) != VK_SUCCESS)
             THROW_EXCEPTION_MSG("Failed creating framebuffer");
     }
-
     LOG_SUCCESS("Framebuffer Created Counts: {}", m_vkSwapChainFramebuffers.size());
+}
+
+void RenderManager::CreateCommandPool()
+{
+    LOG_WARNING("Attempting to create command pool");
+    //~ Command Pool
+    VkCommandPoolCreateInfo poolInfo{};
+    poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
+    poolInfo.queueFamilyIndex = Fox::FindQueueFamily(m_vkPhysicalDevice, m_vkSurface).GraphicsFamily.value();
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
+
+    if (vkCreateCommandPool(m_vkDevice, &poolInfo, nullptr, &m_vkCommandPool) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed creating command pool");
+
+    LOG_SUCCESS("Command pool Created");
+}
+
+void RenderManager::CreateCommandBuffers()
+{
+    LOG_WARNING("Attempting to create command buffers");
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool = m_vkCommandPool;
+    allocInfo.commandBufferCount = 1;
+
+    if (vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &m_vkCommandBuffer) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed creating command buffers");
+
+    LOG_SUCCESS("Command buffer Created");
+}
+
+void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const
+{
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = 0;
+    beginInfo.pInheritanceInfo = nullptr;
+
+    if (vkBeginCommandBuffer(commandBuffer, &beginInfo) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed recording command buffer");
+
+    VkRenderPassBeginInfo renderPassInfo{};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
+    renderPassInfo.renderPass = m_vkRenderPass;
+    renderPassInfo.framebuffer = m_vkSwapChainFramebuffers[imageIndex];
+    renderPassInfo.renderArea.offset = { 0, 0 };
+    renderPassInfo.renderArea.extent = m_descSwapChainSupportDetails.Extent;
+
+    VkClearValue clearColor{};
+    clearColor.color = { 0.25f, 0.33f, 0.10f, 1.0f };
+    renderPassInfo.clearValueCount = 1;
+    renderPassInfo.pClearValues = &clearColor;
+
+    vkCmdBeginRenderPass(commandBuffer, &renderPassInfo, VK_SUBPASS_CONTENTS_INLINE);
+    vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_vkGraphicsPipeline);
+
+    //~ Viewport
+    VkViewport viewport{};
+    viewport.x = 0.0f;
+    viewport.y = 0.0f;
+    viewport.width = m_descSwapChainSupportDetails.Extent.width;
+    viewport.height = m_descSwapChainSupportDetails.Extent.height;
+    viewport.minDepth = 0.0f;
+    viewport.maxDepth = 1.0f;
+    vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+    VkRect2D scissor{};
+    scissor.offset = { 0, 0 };
+    scissor.extent = m_descSwapChainSupportDetails.Extent;
+    vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
+    vkCmdDraw(commandBuffer, 3, 1, 0, 0);
+
+    vkCmdEndRenderPass(commandBuffer);
+
+    if (vkEndCommandBuffer(commandBuffer) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed recording command buffer");
 }
