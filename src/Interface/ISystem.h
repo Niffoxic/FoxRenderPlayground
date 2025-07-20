@@ -5,14 +5,16 @@
 #ifndef ISYSTEM_H
 #define ISYSTEM_H
 
+#include "Common/Core.h"
 #include "Common/ObjectID.h"
 
-class ISystem: public ObjectID
+
+class __declspec(novtable) ISystem: public ObjectID
 {
 public:
     virtual ~ISystem() = default;
 
-    virtual bool OnInit() = 0;
+    virtual bool OnInit()    = 0;
     virtual bool OnRelease() = 0;
 };
 

@@ -12,14 +12,20 @@ WindowException::WindowException(const char *file, int line, const char *func)
     m_dwLastError = GetLastError();
 }
 
+WindowException::WindowException(const char *file, int line, const char *func, DWORD exceptionCode)
+: IException(file, line, func)
+{
+    m_dwLastError = exceptionCode;
+}
+
 int WindowException::GetErrorCode() const
 {
-    return m_dwLastError;
+    return static_cast<int>(m_dwLastError);
 }
 
 std::string WindowException::GetAddOnErrorMessage() const
 {
-    static thread_local std::string s_errorMessage;
+    thread_local std::string s_errorMessage;
 
     if (m_dwLastError == 0)
     {

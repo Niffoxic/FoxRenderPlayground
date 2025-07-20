@@ -198,13 +198,13 @@ std::vector<char> FileSystem::ReadFromFile(const std::string &fileName)
 			nullptr
 		);
 
-	if (file == INVALID_HANDLE_VALUE) THROW_EXCEPTION_MSG("Failed to open file: {}", fileName);
+	if (file == INVALID_HANDLE_VALUE) THROW_EXCEPTION_FMT("Failed to open file: {}", fileName);
 
 	LARGE_INTEGER fileSize{};
 	if (!GetFileSizeEx(file, &fileSize))
 	{
 		CloseHandle(file);
-		THROW_EXCEPTION_MSG("Failed to get file size: {}", fileName);
+		THROW_EXCEPTION_FMT("Failed to get file size: {}", fileName);
 	}
 
 	if (fileSize.QuadPart > SIZE_MAX)
@@ -219,7 +219,7 @@ std::vector<char> FileSystem::ReadFromFile(const std::string &fileName)
 	if (!ReadFile(file, buffer.data(), static_cast<DWORD>(buffer.size()), &bytesRead, nullptr))
 	{
 		CloseHandle(file);
-		THROW_EXCEPTION_MSG("Failed to read file: {}", fileName);
+		THROW_EXCEPTION_FMT("Failed to read file: {}", fileName);
 	}
 
 	if (bytesRead != buffer.size())

@@ -6,7 +6,11 @@
 
 #include <iostream>
 
-int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine, int nCmdShow)
+int WINAPI WinMain(
+    _In_ HINSTANCE hInstance,
+    _In_ HINSTANCE hPrevInstance,
+    _In_ LPSTR lpCmdLine,
+    _In_ int nCmdShow)
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -19,20 +23,19 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     INIT_GLOBAL_LOGGER(logDesc);
 #endif
 
-    //~ Tests
-    WindowsManager windows{};
-    RenderManager renderer{ &windows };
     try
     {
+        WindowsManager windows{};
+        RenderManager renderer{ &windows };
+
         if (!windows.OnInit()) return EXIT_FAILURE;
         if (!renderer.OnInit()) return EXIT_FAILURE;
+
         while (true)
         {
             if (const auto exitCode = WindowsManager::ProcessMessages())
-            {
                 return *exitCode;
-            }
-            //~ Draw
+
             renderer.OnFrameBegin();
             renderer.OnFramePresent();
             renderer.OnFrameEnd();
@@ -48,6 +51,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE hPrevInstance, LPSTR lpCmdLine
     }
     catch (const std::exception& e)
     {
+        MessageBoxA(nullptr, e.what(), "StdException", MB_OK | MB_ICONERROR);
         return EXIT_FAILURE;
     }
 }

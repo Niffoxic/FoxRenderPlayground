@@ -5,13 +5,14 @@
 #ifndef OBJECTID_H
 #define OBJECTID_H
 
+#include "Core.h"
 using ID = unsigned int;
 
 class ObjectID
 {
 public:
-    ObjectID(): m_id(++ID_ALLOCATOR) {}
-    ID GetID() const { return m_id; }
+    ObjectID(): m_id(++ID_ALLOCATOR)  {}
+    FOX_CHECK_RETURN ID GetID() const { return m_id; }
 
 protected:
     ~ObjectID() = default;

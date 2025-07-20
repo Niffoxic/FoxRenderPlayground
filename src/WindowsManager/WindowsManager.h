@@ -13,13 +13,17 @@
 #include "Interface/IFrame.h"
 #include "Interface/ISystem.h"
 
+//--------------------------------------------
+// WindowsManager
+// Handles Win32 windowing, messaging, and state.
+//--------------------------------------------
 class WindowsManager final: public ISystem, public IFrame
 {
 public:
      WindowsManager() = default;
     ~WindowsManager()   override;
 
-    static std::optional<int> ProcessMessages();
+    FOX_CHECK_RETURN static std::optional<int> ProcessMessages();
 
     //~ Frame Interface Impl
     void OnFrameBegin()   override;
@@ -27,35 +31,52 @@ public:
     void OnFrameEnd()     override;
 
     //~ System Interface Impl
-    bool OnInit()    override;
-    bool OnRelease() override;
+    FOX_CHECK_RETURN bool OnInit() _Success_(return != false) override;
+    bool OnRelease() _Success_(return != false) override;
 
     //~ Getters
-    [[nodiscard]] HWND GetWinHandle()         const { return m_hWnd;            }
-    [[nodiscard]] HINSTANCE GetWinHInstance() const { return m_hInstance;       }
-    const std::string& GetWindowsTitle()      const { return m_szWindowsTitle;  }
-    bool IsFullScreen()                       const { return m_bFullScreen;     }
-    WINDOW_SIZE_DESC GetWindowSize()          const { return m_WindowSizeDesc;  }
+    FOX_CHECK_RETURN _Ret_maybenull_ HWND      GetWinHandle    () const { return m_hWnd;      }
+    FOX_CHECK_RETURN _Ret_maybenull_ HINSTANCE GetWinHInstance () const { return m_hInstance; }
+
+    FOX_CHECK_RETURN const std::string& GetWindowsTitle () const { return m_szWindowsTitle; }
+    FOX_CHECK_RETURN bool               IsFullScreen    () const { return m_bFullScreen;    }
+    FOX_CHECK_RETURN WINDOW_SIZE_DESC   GetWindowSize   () const { return m_descWindowSize; }
 
     //~ Setters
-    void SetWindowSize(const WINDOW_SIZE_DESC& desc) { m_WindowSizeDesc = desc; }
-    void SetWindowsTitle(const std::string& title)   { m_szWindowsTitle = title;  }
-    void SetFullScreen(bool fullScreen);
+    void SetWindowSize  (_In_ const WINDOW_SIZE_DESC& desc) { m_descWindowSize = desc;   }
+    void SetWindowsTitle(_In_ const std::string& title)     { m_szWindowsTitle = title;  }
+    void SetWindowsTitle(_In_z_ const char* title)          { m_szWindowsTitle = title;  }
+    void SetFullScreen  (_In_ bool fullScreen);
 
 private:
-    bool InitWindow();
+    FOX_CHECK_RETURN bool InitWindow();
 
     //~ Handle Windows Message
-    LRESULT MessageHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK WindowProcSetup(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
-    static LRESULT CALLBACK WindowProcThunk(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam);
+    FOX_CHECK_RETURN LRESULT MessageHandler(
+        _In_ HWND hwnd,
+        _In_ UINT msg,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam);
+
+    FOX_CHECK_RETURN static LRESULT CALLBACK WindowProcSetup(
+        _In_ HWND hwnd,
+        _In_ UINT msg,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam);
+
+    FOX_CHECK_RETURN static LRESULT CALLBACK WindowProcThunk(
+        _In_ HWND hwnd,
+        _In_ UINT msg,
+        _In_ WPARAM wParam,
+        _In_ LPARAM lParam);
 
 private:
-    bool             m_bFullScreen{ false };
-    HINSTANCE        m_hInstance;
-    HWND             m_hWnd;
-    std::string      m_szWindowsTitle{ "Fox Render Application" };
-    WINDOW_SIZE_DESC m_WindowSizeDesc { .Width = 1280u, .Height = 720u };
+    bool             m_bFullScreen{ false   };
+    HINSTANCE        m_hInstance  { nullptr };
+    HWND             m_hWnd       { nullptr };
+
+    std::string      m_szWindowsTitle { "Fox Render Playground"   };
+    WINDOW_SIZE_DESC m_descWindowSize { .Width = 1280u, .Height = 720u };
 };
 
 #endif //WINDOWSMANAGER_H

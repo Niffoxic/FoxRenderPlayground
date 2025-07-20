@@ -79,7 +79,7 @@ bool WindowsManager::InitWindow()
 
     DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
 
-    RECT rect = m_WindowSizeDesc.GetRect();
+    RECT rect = m_descWindowSize.GetRect();
     if (!AdjustWindowRect(&rect, style, FALSE))
     {
         return false;

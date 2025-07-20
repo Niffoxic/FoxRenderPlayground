@@ -24,9 +24,12 @@ bool RenderManager::OnRelease()
     vkDeviceWaitIdle(m_vkDevice);
 
     //~ Release thread locks
-    vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore, nullptr);
-    vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore, nullptr);
-    vkDestroyFence(m_vkDevice, m_threadInFlightFences, nullptr);
+    for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore[i], nullptr);
+        vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore[i], nullptr);
+        vkDestroyFence(m_vkDevice, m_threadInFlightFences[i], nullptr);
+    }
 
     //~ Clear Render Related stuff
     vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
@@ -65,39 +68,41 @@ void RenderManager::OnFrameBegin()
 
 void RenderManager::OnFramePresent()
 {
-    vkDeviceWaitIdle(m_vkDevice);
-    vkWaitForFences(m_vkDevice, 1, &m_threadInFlightFences, VK_TRUE, UINT64_MAX);
-    vkResetFences(m_vkDevice, 1, &m_threadInFlightFences);
+    if (m_nCurrentFrame >= Fox::MAX_FRAMES_IN_FLIGHT)
+        THROW_EXCEPTION_FMT("Current Count Exceeded: {}/{}", m_nCurrentFrame, Fox::MAX_FRAMES_IN_FLIGHT);
+
+    vkWaitForFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame], VK_TRUE, UINT64_MAX);
+    vkResetFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame]);
 
     uint32_t imageIndex;
     vkAcquireNextImageKHR(
         m_vkDevice,
         m_vkSwapChain,
         UINT64_MAX,
-        m_threadImageAvailableSemaphore,
+        m_threadImageAvailableSemaphore[m_nCurrentFrame],
         VK_NULL_HANDLE,
         &imageIndex
     );
 
-    vkResetCommandBuffer(m_vkCommandBuffer, 0);
-    RecordCommandBuffer(m_vkCommandBuffer, imageIndex);
+    vkResetCommandBuffer(m_vkCommandBuffer[m_nCurrentFrame], 0);
+    RecordCommandBuffer(m_vkCommandBuffer[m_nCurrentFrame], imageIndex);
 
     VkSubmitInfo submitInfo{};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[]{ m_threadImageAvailableSemaphore };
+    VkSemaphore waitSemaphores[]{ m_threadImageAvailableSemaphore[m_nCurrentFrame] };
     VkPipelineStageFlags waitStages[]{ VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT };
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &m_vkCommandBuffer;
+    submitInfo.pCommandBuffers = &m_vkCommandBuffer[m_nCurrentFrame];
 
-    VkSemaphore signalSemaphores[]{ m_threadRenderFinishedSemaphore };
+    VkSemaphore signalSemaphores[]{ m_threadRenderFinishedSemaphore[m_nCurrentFrame] };
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, m_threadInFlightFences) != VK_SUCCESS)
+    if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, m_threadInFlightFences[m_nCurrentFrame]) != VK_SUCCESS)
         THROW_EXCEPTION_MSG("Failed to Draw CB");
 
     VkPresentInfoKHR presentInfo{};
@@ -112,6 +117,8 @@ void RenderManager::OnFramePresent()
 
     if (vkQueuePresentKHR(m_vkPresentQueue, &presentInfo) != VK_SUCCESS)
         THROW_EXCEPTION_MSG("Failed to present");
+
+    m_nCurrentFrame = (m_nCurrentFrame + 1) % Fox::MAX_FRAMES_IN_FLIGHT;
 }
 
 void RenderManager::OnFrameEnd()
@@ -122,9 +129,9 @@ void RenderManager::OnFrameEnd()
 VkShaderModule RenderManager::CreateShaderModule(const std::vector<char>& code) const
 {
     VkShaderModuleCreateInfo createInfo{};
-    createInfo.sType = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
+    createInfo.sType    = VK_STRUCTURE_TYPE_SHADER_MODULE_CREATE_INFO;
     createInfo.codeSize = code.size();
-    createInfo.pCode = reinterpret_cast<const uint32_t*>(code.data());
+    createInfo.pCode    = reinterpret_cast<const uint32_t*>(code.data());
 
     VkShaderModule shaderModule;
 
@@ -601,9 +608,9 @@ void RenderManager::CreateCommandBuffers()
     allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
     allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandPool        = m_vkCommandPool;
-    allocInfo.commandBufferCount = 1;
+    allocInfo.commandBufferCount = static_cast<uint32_t>(m_vkCommandBuffer.size());
 
-    if (vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &m_vkCommandBuffer) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(m_vkDevice, &allocInfo, m_vkCommandBuffer.data()) != VK_SUCCESS)
         THROW_EXCEPTION_MSG("Failed creating command buffers");
 
     LOG_SUCCESS("Command buffer Created");
@@ -639,8 +646,8 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     VkViewport viewport{};
     viewport.x          = 0.0f;
     viewport.y          = 0.0f;
-    viewport.width      = m_descSwapChainSupportDetails.Extent.width;
-    viewport.height     = m_descSwapChainSupportDetails.Extent.height;
+    viewport.width      = static_cast<float>(m_descSwapChainSupportDetails.Extent.width);
+    viewport.height     = static_cast<float>(m_descSwapChainSupportDetails.Extent.height);
     viewport.minDepth   = 0.0f;
     viewport.maxDepth   = 1.0f;
     vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
@@ -661,26 +668,32 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
 void RenderManager::CreateSyncObjects()
 {
     LOG_WARNING("Creating Thread (GPU Execution) locks");
+
+    m_threadImageAvailableSemaphore .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_threadInFlightFences          .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_threadRenderFinishedSemaphore .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
-
-    if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_threadImageAvailableSemaphore) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed creating image available semaphore");
-
-    LOG_INFO("Created Thread ImageAvailable");
-
-    if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr, &m_threadRenderFinishedSemaphore) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed creating finish semaphore");
-
-    LOG_INFO("Created Finish semaphore");
 
     VkFenceCreateInfo fenceInfo{};
     fenceInfo.sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO;
     fenceInfo.flags = VK_FENCE_CREATE_SIGNALED_BIT;
 
-    if (vkCreateFence(m_vkDevice, &fenceInfo, nullptr, &m_threadInFlightFences) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed creating fences");
-    LOG_INFO("Block Fence created");
+    for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; ++i)
+    {
+        if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr,
+            &m_threadImageAvailableSemaphore[i]) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed creating image available semaphore");
+
+        if (vkCreateSemaphore(m_vkDevice, &semaphoreInfo, nullptr,
+            &m_threadRenderFinishedSemaphore[i]) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed creating finish semaphore");
+
+        if (vkCreateFence(m_vkDevice, &fenceInfo, nullptr,
+            &m_threadInFlightFences[i]) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed creating fences");
+    }
 
     LOG_SUCCESS("GPU-thread protection locks are created");
 }

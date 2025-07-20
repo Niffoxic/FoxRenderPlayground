@@ -7,24 +7,36 @@
 
 #include "Interface/ISystem.h"
 #include "Common/DefineVulkan.h"
+#include <sal.h>
+
+namespace Fox
+{
+    inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT{ 2u };
+}
 
 class RenderManager final: public ISystem, public IFrame
 {
 public:
-    explicit RenderManager(WindowsManager* winManager);
+    explicit RenderManager(_In_ WindowsManager* winManager);
     ~RenderManager() override;
 
     //~ System Interface Impl
-    bool OnInit()         override;
-    bool OnRelease()      override;
+    bool OnInit   () override;
+    bool OnRelease() override;
 
     //~ Frame Interface Impl
-    void OnFrameBegin()   override;
-    void OnFramePresent() override;
-    void OnFrameEnd()     override;
+    void OnFrameBegin   () override;
+    void OnFramePresent () override;
+    void OnFrameEnd     () override;
 
-    VkShaderModule CreateShaderModule(const std::vector<char>& code) const;
-    void RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t imageIndex) const;
+    FOX_CHECK_RETURN VkShaderModule CreateShaderModule(
+        _In_ const std::vector<char>& code) const
+    _Pre_satisfies_(code.size() > 0) _Success_(return != VK_NULL_HANDLE);
+
+    void RecordCommandBuffer(
+        _In_ VkCommandBuffer commandBuffer,
+        _In_ uint32_t        imageIndex) const
+    _Pre_satisfies_(commandBuffer != VK_NULL_HANDLE);
 
 private:
     //~ Initialize Vulkan
@@ -47,7 +59,7 @@ private:
     void CreateSyncObjects();
 
 private:
-    WindowsManager* m_pWinManager{ nullptr };
+    _In_ WindowsManager* m_pWinManager{ nullptr };
 
     //~ Vulkan members
     VkInstance                  m_vkInstance      { VK_NULL_HANDLE };
@@ -77,12 +89,13 @@ private:
     VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
     VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
-    VkCommandBuffer  m_vkCommandBuffer   { VK_NULL_HANDLE };
 
-    //~ Sync
-    VkSemaphore m_threadImageAvailableSemaphore{ VK_NULL_HANDLE };
-    VkSemaphore m_threadRenderFinishedSemaphore{ VK_NULL_HANDLE };
-    VkFence     m_threadInFlightFences         { VK_NULL_HANDLE };
+    std::vector<VkCommandBuffer>  m_vkCommandBuffer              { VK_NULL_HANDLE };
+    std::vector<VkSemaphore>      m_threadImageAvailableSemaphore{ VK_NULL_HANDLE };
+    std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore{ VK_NULL_HANDLE };
+    std::vector<VkFence>          m_threadInFlightFences         { VK_NULL_HANDLE };
+
+    uint32_t m_nCurrentFrame{ 0 };
 };
 
 #endif //RENDERMANAGER_H
