@@ -1,7 +1,7 @@
 cmake_minimum_required(VERSION 3.31)
 project(FoxRenderEngine)
 
-set(CMAKE_CXX_STANDARD 23)
+set(CMAKE_CXX_STANDARD 20)
 
 message(STATUS "Build Type = ${CMAKE_BUILD_TYPE}")
 add_subdirectory(src)

@@ -2,7 +2,7 @@
 set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
 set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine")
 
-file(WRITE "${CMAKE_BINARY_DIR}/resource_paths.txt"
+file(WRITE "${CMAKE_SOURCE_DIR}/resource_paths.txt"
         "OUTPUT_BASE=${OUTPUT_BASE}\n"
         "PROJECT_SOURCE=${PROJECT_SOURCE}\n"
 )

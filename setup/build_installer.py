@@ -19,7 +19,7 @@ def download_with_headers(url: str, dest_path: str):
     with urllib.request.urlopen(req) as response, open(dest_path, 'wb') as out_file:
         shutil.copyfileobj(response, out_file)
 
-def read_cmake_paths(path: str = "../build/resource_paths.txt") -> dict:
+def read_cmake_paths(path: str = "../resource_paths.txt") -> dict:
     print("Reading cmake paths...")
     print("Current Directory:", os.getcwd())
     print("Target Path (relative):", path)

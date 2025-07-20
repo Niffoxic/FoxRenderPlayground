@@ -1,9 +1,31 @@
 # ------------------------------
-# CLion / JetBrains IDE settings
+# JetBrains / CLion IDE
 # ------------------------------
 .idea/
 *.iml
 *.iws
+.clion/
+
+# ------------------------------
+# Visual Studio
+# ------------------------------
+.vscode/
+.vs/
+*.vcxproj
+*.vcxproj.*
+*.sln
+*.suo
+*.user
+*.userosscache
+*.opensdf
+*.sdf
+*.cache
+*.log
+*.tlog
+*.ipch
+*.db
+*.db-wal
+*.db-shm
 
 # ------------------------------
 # OS generated files
@@ -19,23 +41,25 @@ build/
 out/
 bin/
 lib/
+Debug/
+Release/
+x64/
+x86/
 
-# If you use Ninja or Makefiles manually
+# ------------------------------
+# CMake generated files
+# ------------------------------
 Makefile
 CMakeCache.txt
 CMakeFiles/
 CTestTestfile.cmake
 cmake_install.cmake
 install_manifest.txt
-
-# ------------------------------
-# CMake user presets or config
-# ------------------------------
 CMakeUserPresets.json
 CMakePresets.json.user
 
 # ------------------------------
-# Compiled object files
+# Compiled object / binary files
 # ------------------------------
 *.o
 *.obj
@@ -44,22 +68,38 @@ CMakePresets.json.user
 *.lib
 *.dll
 *.exe
+*.pdb
+*.idb
+*.exp
 
 # ------------------------------
-# Generated files
+# Generated / Temp files
 # ------------------------------
 *.log
 *.pch
 *.pyc
 *.pyo
 *.class
+*.tmp
+*.bak
 
 # ------------------------------
-# Crash reports / core dumps
+# Crash dumps / reports
 # ------------------------------
 *.stackdump
+*.dmp
+*.mdmp
 
 # ------------------------------
-# CLion caches (optional)
+# Ignore custom Python installer cache if any
 # ------------------------------
-.clion/
+__pycache__/
+*.pyc
+*.pyo
+
+# ------------------------------
+# Shader binary cache (optional)
+# ------------------------------
+*.spv
+*.cso
+*.hlsl.bin
