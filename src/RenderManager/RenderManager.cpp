@@ -26,9 +26,9 @@ bool RenderManager::OnRelease()
     //~ Release thread locks
     for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
     {
-        vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore[i], nullptr);
-        vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore[i], nullptr);
-        vkDestroyFence(m_vkDevice, m_threadInFlightFences[i], nullptr);
+		vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore[i], nullptr);
+		vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore[i], nullptr);
+		vkDestroyFence(m_vkDevice, m_threadInFlightFences[i], nullptr);
     }
 
     //~ Clear Render Related stuff
@@ -68,6 +68,11 @@ void RenderManager::OnFrameBegin()
 
 void RenderManager::OnFramePresent()
 {
+    vkDeviceWaitIdle(m_vkDevice);
+    if (m_threadImageAvailableSemaphore.empty()
+        || m_threadInFlightFences.empty()
+        || m_threadRenderFinishedSemaphore.empty()) return;
+
     if (m_nCurrentFrame >= Fox::MAX_FRAMES_IN_FLIGHT)
         THROW_EXCEPTION_FMT("Current Count Exceeded: {}/{}", m_nCurrentFrame, Fox::MAX_FRAMES_IN_FLIGHT);
 
@@ -603,6 +608,7 @@ void RenderManager::CreateCommandPool()
 
 void RenderManager::CreateCommandBuffers()
 {
+    m_vkCommandBuffer.resize(Fox::MAX_FRAMES_IN_FLIGHT);
     LOG_WARNING("Attempting to create command buffers");
     VkCommandBufferAllocateInfo allocInfo{};
     allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;

@@ -46,7 +46,7 @@ int WINAPI WinMain(
     catch (const IException& e)
     {
         e.SaveCrashLog("CrashReport");
-        MessageBox(nullptr, e.what(), "Error", MB_OK);
+        MessageBox(nullptr, e.what(), "Error", MB_OK | MB_ICONERROR);
         return EXIT_FAILURE;
     }
     catch (const std::exception& e)

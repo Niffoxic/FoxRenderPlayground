@@ -90,10 +90,10 @@ private:
     VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
     VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
 
-    std::vector<VkCommandBuffer>  m_vkCommandBuffer              { VK_NULL_HANDLE };
-    std::vector<VkSemaphore>      m_threadImageAvailableSemaphore{ VK_NULL_HANDLE };
-    std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore{ VK_NULL_HANDLE };
-    std::vector<VkFence>          m_threadInFlightFences         { VK_NULL_HANDLE };
+    std::vector<VkCommandBuffer>  m_vkCommandBuffer;
+    std::vector<VkSemaphore>      m_threadImageAvailableSemaphore;
+    std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore;
+    std::vector<VkFence>          m_threadInFlightFences;
 
     uint32_t m_nCurrentFrame{ 0 };
 };

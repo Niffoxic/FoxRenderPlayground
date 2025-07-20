@@ -224,7 +224,14 @@ namespace Fox
             break;
 
         case VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT:
-            THROW_EXCEPTION_MSG((std::format("[VK][{}]: {}", typeStr, message)).c_str());
+            try {
+                THROW_EXCEPTION_FMT("[VK][{}]: {}", typeStr, message);
+            }
+            catch (const IException& e) {
+                OutputDebugStringA(e.what());
+                std::string msg = e.what();
+                LOG_ERROR("{}", msg);
+            }
             break;
 
         default:
