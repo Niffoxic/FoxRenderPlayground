@@ -7,6 +7,7 @@
 
 #include <sal.h>
 #include <vcruntime.h>
+
 #define FOX_CHECK_RETURN _Check_return_ _NODISCARD
 
 #endif //CORE_H

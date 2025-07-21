@@ -5,10 +5,6 @@ from PIL import Image, ImageTk, ImageChops, ImageSequence
 import os
 
 
-class ApplicationState(Enum):
-    STARTUP = 1
-
-
 class FadeDirection(Enum):
     LEFT    = "left"
     RIGHT   = "right"
@@ -250,7 +246,6 @@ class InstallerApplication(CTk):
         super().__init__()
 
         self.application_state_layout = {}
-        self.application_state = ApplicationState.STARTUP
 
         self.image_path = image_path
         self.fade_direction = fade_direction

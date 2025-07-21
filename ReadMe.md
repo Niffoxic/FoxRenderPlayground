@@ -14,6 +14,7 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 ## Requirements
 
 - Windows 10/11
+- Python 3.9+
 - Vulkan SDK (1.3+) `note: can be downloaded with gui installer`
 - CMake 3.90+ `note: can be downloaded with gui installer`
 - Visual Studio 2019/2022 or MSVC toolchain
@@ -29,12 +30,24 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 
 ![GUI Installer Preview](doc/installer-image.png)
 
+> Note: If Vulkan is not detected after installation, ensure that the %VULKAN_SDK% environment variable is set correctly in your system’s PATH. After setting it, restart your system.
+Still facing issues? Feel free to reach out at: niffoisme@gmail.com
 ```bash
 cd FoxRenderEngine/setup
 pip install -r requirements.txt
 python build_installer.py
 ```
 
-`Note: I will update how to build it without gui installer just in case if anyone don't trust me with .exe file XD (I will do it later tho I gotta go back to the main vulkan stuff`
+### Build with CMake
+If you'd rather build manually:
+```bash
+git clone https://github.com/Niffoxic/FoxRenderEngine.git
+cd FoxRenderEngine
+mkdir build && cd build
+cmake ..
+cmake --build .
+```
+
+> This will automatically compile shaders via Python as part of the build process, as long as the VULKAN_SDK environment variable is set and Python is installed.
 
 This project is licensed under the [Apache License 2.0](http://www.apache.org/licenses/LICENSE-2.0).
