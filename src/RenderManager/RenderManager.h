@@ -29,6 +29,7 @@ public:
     void OnFramePresent () override;
     void OnFrameEnd     () override;
 
+
     FOX_CHECK_RETURN VkShaderModule CreateShaderModule(
         _In_ const std::vector<char>& code) const
     _Pre_satisfies_(code.size() > 0) _Success_(return != VK_NULL_HANDLE);

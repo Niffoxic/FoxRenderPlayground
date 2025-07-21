@@ -1,10 +1,17 @@
 # Build Location
 set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
 set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine")
+set(SHADER_INPUT_PATH "shaders")
+set(SHADER_OUTPUT_PATH "compiled_shaders")
+set(VULKAN_SDK_PATH "$ENV{VULKAN_SDK}")
 
 file(WRITE "${CMAKE_SOURCE_DIR}/resource_paths.txt"
+        "# AUTO_GENERATED_FILE_PLEASE_IGNORE\n"
         "OUTPUT_BASE=${OUTPUT_BASE}\n"
         "PROJECT_SOURCE=${PROJECT_SOURCE}\n"
+        "SHADER_INPUT_PATH=${SHADER_INPUT_PATH}\n"
+        "SHADER_OUTPUT_PATH=${SHADER_OUTPUT_PATH}\n"
+        "VULKAN_SDK=${VULKAN_SDK_PATH}\n"
 )
 
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}")
@@ -69,3 +76,29 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/Utils # same reason I dont like utils then this then that....
         imgui_lib
 )
+
+set(SHADER_COMPILER "${PROJECT_SOURCE}/setup/compile_shaders.py")
+
+
+find_package(Python3 REQUIRED COMPONENTS Interpreter)
+
+file(GLOB_RECURSE SHADER_INPUTS
+        "${PROJECT_SOURCE}/${SHADER_INPUT_PATH}/*.vert"
+        "${PROJECT_SOURCE}/${SHADER_INPUT_PATH}/*.frag"
+)
+
+add_custom_command(
+        OUTPUT "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}/.timestamp"  # dummy file for tracking
+        COMMAND "${Python3_EXECUTABLE}" "${SHADER_COMPILER}"
+        --input "${PROJECT_SOURCE}/${SHADER_INPUT_PATH}"
+        --output "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}"
+        --vulkan "${VULKAN_SDK_PATH}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}/.timestamp"
+        DEPENDS ${SHADER_INPUTS}
+        COMMENT "Auto-compiling shaders due to changes"
+)
+
+add_custom_target(CompileShaders ALL
+        DEPENDS "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}/.timestamp"
+)
+

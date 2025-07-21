@@ -440,8 +440,8 @@ void RenderManager::CreateRenderPipeline()
 {
     LOG_WARNING("Attempting to Create Render Pipeline");
     //~ Only for test
-    const auto vertCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle-vert.spv");
-    const auto fragCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle-frag.spv");
+    const auto vertCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle/mul-triangle-vert.spv");
+    const auto fragCode = FileSystem::ReadFromFile("compiled_shaders/test_triangle/mul-triangle-frag.spv");
 
     m_shaderTestCubeVert = CreateShaderModule(vertCode);
     m_shaderTestCubeFrag = CreateShaderModule(fragCode);
