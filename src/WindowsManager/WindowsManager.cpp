@@ -74,7 +74,7 @@ bool WindowsManager::InitWindow()
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
     wc.lpszMenuName = nullptr;
-    wc.lpszClassName = "WINDOW_CLASS_NAME";
+    wc.lpszClassName = F_TEXT("WINDOW_CLASS_NAME");
     wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wc))

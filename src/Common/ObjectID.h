@@ -12,7 +12,7 @@ class ObjectID
 {
 public:
     ObjectID(): m_id(++ID_ALLOCATOR)  {}
-    FOX_CHECK_RETURN ID GetID() const { return m_id; }
+    _fox_Return_safe ID GetID() const { return m_id; }
 
 protected:
     ~ObjectID() = default;

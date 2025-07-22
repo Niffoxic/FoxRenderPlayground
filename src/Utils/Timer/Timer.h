@@ -105,17 +105,17 @@ public:
         }
     }
 
-    FOX_CHECK_RETURN T GetElapsedTime()
+    _fox_Return_safe T GetElapsedTime()
     {
         return m_nElapsedTime.load();
     }
 
-    FOX_CHECK_RETURN T GetTotalTime()
+    _fox_Return_safe T GetTotalTime()
     {
         return m_nTotalTime.load();
     }
 
-    FOX_CHECK_RETURN T GetDeltaTime()
+    _fox_Return_safe T GetDeltaTime()
     {
         return m_nDeltaTime.load();
     }

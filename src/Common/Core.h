@@ -10,25 +10,25 @@
     #include <sal.h>
     #include <vcruntime.h>
 
-    #define FOX_CHECK_RETURN     _Check_return_ _NODISCARD
-    #define FOX_IN               _In_
-    #define FOX_OUT              _Out_
-    #define FOX_INOUT            _Inout_
-    #define FOX_SUCCESS(x)       _Success_(x)
+    #define _fox_Return_safe        _Check_return_ _NODISCARD
+    #define _fox_In_                _In_
+    #define _fox_In_z_              _In_z_
+    #define _fox_Out_               _Out_
+    #define _fox_Inout_             _Inout_
+    #define _fox_Success_(x)        _Success_(x)
+    #define _fox_Ret_maybenull_     _Ret_maybenull_
+    #define _fox_Pre_satisfies_(x)  _Pre_satisfies_(x)
 
 #elif defined(__clang__) || defined(__GNUC__)
-    #define FOX_CHECK_RETURN     [[nodiscard]]
-    #define FOX_IN
-    #define FOX_OUT
-    #define FOX_INOUT
-    #define FOX_SUCCESS(x)
-#else
-    #warning "Unknown compiler; FOX_* annotations will be empty."
-    #define FOX_CHECK_RETURN
-    #define FOX_IN
-    #define FOX_OUT
-    #define FOX_INOUT
-    #define FOX_SUCCESS(x)
+#warning "You building without MSCV don't blame me if dont work"
+
+    #define _fox_Return_safe        [[nodiscard]]
+    #define _fox_In_                _In_
+    #define _fox_Out_               _Out_
+    #define _fox_Inout_             _Inout_
+    #define _fox_Success_(x)        _Success_(x)
+    #define _fox_Ret_maybenull_     _Ret_maybenull_
+    #define _fox_Pre_satisfies_(x)
 #endif
 
 #pragma endregion ANNOTATIONS
