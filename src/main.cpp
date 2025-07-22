@@ -1,9 +1,6 @@
-#include "WindowsManager/WindowsManager.h"
-#include "RenderManager/RenderManager.h"
-#include "Logger/Logger.h"
-#include "Timer/Timer.h"
-
+#include "Engine/FoxPlayground.h"
 #include <excpt.h>
+
 
 LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
 {
@@ -16,7 +13,7 @@ LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
     MessageBox(
         nullptr,
         msg.c_str(),
-        "WinAPI Error",
+        F_TEXT("WinAPI Error"),
         MB_OK | MB_ICONERROR
     );
 
@@ -31,7 +28,7 @@ int WINAPI WinMain(
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
-    SetUnhandledExceptionFilter(CrashHandler);
+    // SetUnhandledExceptionFilter(CrashHandler);
 
 #if defined(_DEBUG) || defined(ENABLE_TERMINAL)
     LOGGER_INIT_DESC logDesc{};
@@ -41,29 +38,11 @@ int WINAPI WinMain(
     INIT_GLOBAL_LOGGER(logDesc);
 #endif
 
-    // TODO: Test Only - Replace with Facade
     try
     {
-        WindowsManager  windows {};
-        RenderManager   renderer{ &windows };
-        Timer<float>    timer   {};
-
-        if (!windows.OnInit())  return EXIT_FAILURE;
-        if (!renderer.OnInit()) return EXIT_FAILURE;
-
-        timer.Start();
-        while (true)
-        {
-            timer.Tick();
-            if (const auto exitCode = WindowsManager::ProcessMessages()) return *exitCode;
-            renderer.OnFrameBegin();
-            renderer.OnFramePresent();
-            renderer.OnFrameEnd();
-
-            const float elapsed = timer.GetElapsedTime();
-            windows.AddOnWindowsTitle(ToFString(elapsed));
-            Sleep(1);
-        }
+        FoxPlayground playground{};
+        if (not playground.Init()) return EXIT_FAILURE;
+        return playground.Execute();
     }
     catch (const IException& e)
     {

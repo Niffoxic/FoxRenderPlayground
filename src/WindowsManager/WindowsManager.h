@@ -17,22 +17,20 @@
 // WindowsManager
 // Handles Win32 windowing, messaging, and state.
 //--------------------------------------------
-class WindowsManager final: public ISystem, public IFrame
+class WindowsManager final: public ISystem
 {
+    FOX_SYSTEM_GENERATOR(WindowsManager);
 public:
      WindowsManager() = default;
     ~WindowsManager()   override;
 
     _fox_Return_safe static std::optional<int> ProcessMessages();
 
-    //~ Frame Interface Impl
-    void OnFrameBegin()   override;
-    void OnFramePresent() override;
-    void OnFrameEnd()     override;
-
     //~ System Interface Impl
     _fox_Return_safe bool OnInit() _fox_Success_(return != false) override;
-    bool OnRelease() _fox_Success_(return != false) override;
+    void OnUpdateStart(float deltaTime) override;
+    void OnUpdateEnd() override;
+    void OnRelease() override;
 
     //~ Getters
     _fox_Return_safe _fox_Ret_maybenull_ HWND      GetWinHandle    () const { return m_hWnd;      }

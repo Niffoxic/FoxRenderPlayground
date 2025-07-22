@@ -13,23 +13,21 @@ namespace Fox
     inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT{ 2u };
 }
 
-class RenderManager final: public ISystem, public IFrame
+class RenderManager final: public ISystem
 {
+    FOX_SYSTEM_GENERATOR(RenderManager);
 public:
     explicit RenderManager(_fox_In_ WindowsManager* winManager);
     ~RenderManager() override;
 
     //~ System Interface Impl
-    bool OnInit   () override;
-    bool OnRelease() override;
+    bool OnInit       () override _fox_Success_(return != false);
+    void OnUpdateEnd  () override;
+    void OnRelease    () override;
 
-    //~ Frame Interface Impl
-    void OnFrameBegin   () override;
-    void OnFramePresent () override;
-    void OnFrameEnd     () override;
+    void OnUpdateStart(float deltaTime) override;
 
-    _fox_Return_safe VkShaderModule CreateShaderModule(
-        _fox_In_ const std::vector<char>& code) const
+    _fox_Return_safe VkShaderModule CreateShaderModule(_fox_In_ const std::vector<char>& code) const
     _fox_Pre_satisfies_(code.size() > 0) _fox_Success_(return != VK_NULL_HANDLE);
 
     void RecordCommandBuffer(

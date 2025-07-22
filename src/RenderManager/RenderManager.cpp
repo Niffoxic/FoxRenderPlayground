@@ -19,54 +19,7 @@ bool RenderManager::OnInit()
     return InitVulkan();
 }
 
-bool RenderManager::OnRelease()
-{
-    vkDeviceWaitIdle(m_vkDevice);
-
-    //~ Release thread locks
-    for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
-    {
-		vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore[i], nullptr);
-		vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore[i], nullptr);
-		vkDestroyFence(m_vkDevice, m_threadInFlightFences[i], nullptr);
-    }
-
-    //~ Clear Render Related stuff
-    vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
-
-    for (const auto framebuffer : m_vkSwapChainFramebuffers)
-        vkDestroyFramebuffer(m_vkDevice, framebuffer, nullptr);
-
-    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
-    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
-
-    vkDestroyPipeline(m_vkDevice, m_vkGraphicsPipeline, nullptr);
-    vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
-    vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
-
-    //~ Clean Swap chain
-    for (auto& view: m_vkSwapChainImageViews)
-        vkDestroyImageView(m_vkDevice, view, nullptr);
-    vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
-
-    //~ Clean Vulkan resources
-    vkDestroyDevice(m_vkDevice, nullptr);
-
-#if defined(DEBUG) || defined(_DEBUG)
-    Fox::DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
-#endif
-
-    vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
-    vkDestroyInstance(m_vkInstance, nullptr);
-    return true;
-}
-
-void RenderManager::OnFrameBegin()
-{
-
-}
-
-void RenderManager::OnFramePresent()
+void RenderManager::OnUpdateStart(float deltaTime)
 {
     vkDeviceWaitIdle(m_vkDevice);
     if (m_threadImageAvailableSemaphore.empty()
@@ -126,9 +79,50 @@ void RenderManager::OnFramePresent()
     m_nCurrentFrame = (m_nCurrentFrame + 1) % Fox::MAX_FRAMES_IN_FLIGHT;
 }
 
-void RenderManager::OnFrameEnd()
+void RenderManager::OnUpdateEnd()
 {
 
+}
+
+void RenderManager::OnRelease()
+{
+    vkDeviceWaitIdle(m_vkDevice);
+
+    //~ Release thread locks
+    for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+		vkDestroySemaphore(m_vkDevice, m_threadImageAvailableSemaphore[i], nullptr);
+		vkDestroySemaphore(m_vkDevice, m_threadRenderFinishedSemaphore[i], nullptr);
+		vkDestroyFence(m_vkDevice, m_threadInFlightFences[i], nullptr);
+    }
+
+    //~ Clear Render Related stuff
+    vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
+
+    for (const auto framebuffer : m_vkSwapChainFramebuffers)
+        vkDestroyFramebuffer(m_vkDevice, framebuffer, nullptr);
+
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
+    vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
+
+    vkDestroyPipeline(m_vkDevice, m_vkGraphicsPipeline, nullptr);
+    vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
+    vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
+
+    //~ Clean Swap chain
+    for (auto& view: m_vkSwapChainImageViews)
+        vkDestroyImageView(m_vkDevice, view, nullptr);
+    vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
+
+    //~ Clean Vulkan resources
+    vkDestroyDevice(m_vkDevice, nullptr);
+
+#if defined(DEBUG) || defined(_DEBUG)
+    Fox::DestroyDebugUtilsMessengerEXT(m_vkInstance, m_vkDebugMessenger, nullptr);
+#endif
+
+    vkDestroySurfaceKHR(m_vkInstance, m_vkSurface, nullptr);
+    vkDestroyInstance(m_vkInstance, nullptr);
 }
 
 VkShaderModule RenderManager::CreateShaderModule(const std::vector<char>& code) const
