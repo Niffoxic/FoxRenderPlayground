@@ -3,10 +3,27 @@
 #include "Logger/Logger.h"
 
 #include "ExceptionHandler/IException.h"
-
-#include <iostream>
-
 #include "Timer/Timer.h"
+#include <excpt.h>
+
+LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
+{
+    if (!ExceptionInfo || !ExceptionInfo->ExceptionRecord)
+        return EXCEPTION_CONTINUE_SEARCH;
+
+    const DWORD code = ExceptionInfo->ExceptionRecord->ExceptionCode;
+
+    const FString msg = F_TEXT("Execution Flow Error With Code: 0x") + F_TEXT(std::format("{:08X}", code));
+
+    MessageBoxA(
+        nullptr,
+        msg.c_str(),
+        "WinAPI Error",
+        MB_OK | MB_ICONERROR
+    );
+
+    return EXCEPTION_EXECUTE_HANDLER;
+}
 
 int WINAPI WinMain(
     FOX_IN HINSTANCE hInstance,
@@ -16,6 +33,7 @@ int WINAPI WinMain(
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
+    SetUnhandledExceptionFilter(CrashHandler);
 
 #if defined(_DEBUG) || defined(ENABLE_TERMINAL)
     LOGGER_INIT_DESC logDesc{};
@@ -27,11 +45,11 @@ int WINAPI WinMain(
 
     try
     {
-        WindowsManager windows{};
-        RenderManager renderer{ &windows };
-        Timer<float> timer{};
+        WindowsManager  windows {};
+        RenderManager   renderer{ &windows };
+        Timer<float>    timer   {};
 
-        if (!windows.OnInit()) return EXIT_FAILURE;
+        if (!windows.OnInit())  return EXIT_FAILURE;
         if (!renderer.OnInit()) return EXIT_FAILURE;
 
         timer.Start();
@@ -52,13 +70,13 @@ int WINAPI WinMain(
     }
     catch (const IException& e)
     {
-        e.SaveCrashLog("CrashReport");
-        MessageBox(nullptr, e.what(), "Error", MB_OK | MB_ICONERROR);
+        e.SaveCrashLog(F_TEXT("CrashReport"));
+        MessageBox(nullptr, e.what(), F_TEXT("Error"), MB_OK | MB_ICONERROR);
         return EXIT_FAILURE;
     }
     catch (const std::exception& e)
     {
-        MessageBoxA(nullptr, e.what(), "StdException", MB_OK | MB_ICONERROR);
+        MessageBox(nullptr, e.what(), F_TEXT("StdException"), MB_OK | MB_ICONERROR);
         return EXIT_FAILURE;
     }
 }

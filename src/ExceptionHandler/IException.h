@@ -28,23 +28,23 @@ public:
 
     FOX_CHECK_RETURN const char* what() const noexcept override _Success_(return != nullptr);
 
-    void SaveCrashLog(_In_ const std::string& savePath) const;
+    void SaveCrashLog(_In_ const FString& savePath) const;
 
-    FOX_CHECK_RETURN const  std::string& GetFilePath     () const { return m_szErrorFileName;     }
+    FOX_CHECK_RETURN const  FString& GetFilePath     () const { return m_szErrorFileName;     }
     FOX_CHECK_RETURN int    GetErrorLine                 () const { return m_nLine;               }
-    FOX_CHECK_RETURN const  std::string& GetErrorFunction() const { return m_szErrorFunctionName; }
+    FOX_CHECK_RETURN const  FString& GetErrorFunction() const { return m_szErrorFunctionName; }
 
 protected:
-    const   std::string& GetErrorLog         () const;
+    const   FString& GetErrorLog         () const;
     virtual int          GetErrorCode        () const { return 0;    }
-    virtual std::string  GetAddOnErrorMessage() const { return ""; }   // Add Message to the end iff its very specific
+    virtual FString  GetAddOnErrorMessage() const { return ""; }   // Add Message to the end iff its very specific
 
 protected:
-    std::string         m_szErrorFileName;
-    std::string         m_szErrorMessageName; // Optional
-    std::string         m_szErrorFunctionName;
-    int                 m_nLine;
-    mutable std::string m_szWhatBuffer;
+    FString         m_szErrorFileName;
+    FString         m_szErrorMessageName;
+    FString         m_szErrorFunctionName;
+    mutable FString m_szWhatBuffer;
+    int             m_nLine;
 };
 
 #define THROW_EXCEPTION()        throw IException(__FILE__, __LINE__, __FUNCTION__);
