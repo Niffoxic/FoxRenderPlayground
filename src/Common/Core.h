@@ -35,6 +35,12 @@
 
 #pragma region CPP_SPECIFICS
 
+#if defined(_MSC_VER)
+    #define _NOVTABLE __declspec(novtable)
+#else
+    #define _NOVTABLE
+#endif
+
 /**
  *      STRING SPECIFICS
  */

@@ -5,9 +5,9 @@
 #ifndef IFRAME_H
 #define IFRAME_H
 
-#include "Common/ObjectID.h"
+#include "Common/FObject.h"
 
-class IFrame: public ObjectID
+class _NOVTABLE IFrame: public FObject
 {
 public:
     virtual ~IFrame() = default;

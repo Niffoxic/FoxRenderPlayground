@@ -15,6 +15,7 @@ namespace Fox
 
 class RenderManager final: public ISystem, public IFrame
 {
+    FOX_SYSTEM_GENERATOR(RenderManager);
 public:
     explicit RenderManager(_fox_In_ WindowsManager* winManager);
     ~RenderManager() override;

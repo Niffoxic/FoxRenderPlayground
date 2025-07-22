@@ -16,7 +16,7 @@ LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
     MessageBox(
         nullptr,
         msg.c_str(),
-        "WinAPI Error",
+        F_TEXT("WinAPI Error"),
         MB_OK | MB_ICONERROR
     );
 

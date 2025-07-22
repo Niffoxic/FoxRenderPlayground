@@ -19,6 +19,7 @@
 //--------------------------------------------
 class WindowsManager final: public ISystem, public IFrame
 {
+    FOX_SYSTEM_GENERATOR(WindowsManager);
 public:
      WindowsManager() = default;
     ~WindowsManager()   override;

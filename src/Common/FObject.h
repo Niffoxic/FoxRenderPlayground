@@ -8,14 +8,14 @@
 #include "Core.h"
 using ID = unsigned int;
 
-class ObjectID
+class FObject
 {
 public:
-    ObjectID(): m_id(++ID_ALLOCATOR)  {}
+    FObject(): m_id(++ID_ALLOCATOR)  {}
     _fox_Return_safe ID GetID() const { return m_id; }
 
 protected:
-    ~ObjectID() = default;
+    ~FObject() = default;
 
 private:
     inline static ID ID_ALLOCATOR{ 0u };
