@@ -72,7 +72,7 @@ private:
 };
 
 template<typename ... Args>
-__inline void DependencyResolver::Register(Args *...args)
+inline void DependencyResolver::Register(Args *...args)
 {
     static_assert((std::is_base_of_v<ISystem, Args> && ...), "All args must be derived from ISystem");
     (Register(static_cast<ISystem*>(args)), ...);
@@ -80,14 +80,14 @@ __inline void DependencyResolver::Register(Args *...args)
 
 
 template<typename ... Args>
-__inline void DependencyResolver::Unregister(Args *...args)
+inline void DependencyResolver::Unregister(Args *...args)
 {
     static_assert((std::is_base_of_v<ISystem, Args> && ...), "All args must be derived from ISystem");
     (Unregister(static_cast<ISystem*>(args)), ...);
 }
 
 template<typename ... Args>
-__inline bool DependencyResolver::InitializeSystems(Args &...args)
+inline bool DependencyResolver::InitializeSystems(Args &...args)
 {
     LOG_WARNING("Attempting to initialize systems...");
     SortTopologically();
@@ -106,25 +106,25 @@ __inline bool DependencyResolver::InitializeSystems(Args &...args)
 }
 
 template<typename ... Args>
-__inline void DependencyResolver::UpdateStartSystems(Args...args) const
+inline void DependencyResolver::UpdateStartSystems(Args...args) const
 {
     for (ISystem* system: m_ppSystems) system->OnUpdateStart(args...);
 }
 
 template<typename ... Args>
-__inline void DependencyResolver::UpdateEndSystems(Args...args) const
+inline void DependencyResolver::UpdateEndSystems(Args...args) const
 {
     for (ISystem* system: m_ppSystems) system->OnUpdateEnd(args...);
 }
 
 template<typename ... Args>
-__inline void DependencyResolver::ReleaseSystems(Args &...args)
+inline void DependencyResolver::ReleaseSystems(Args &...args)
 {
     for (ISystem* system: m_ppSystems) system->OnRelease(args...);
 }
 
 template<typename ... Args>
-__inline void DependencyResolver::AddDependency(ISystem *pSystem, Args*...args)
+inline void DependencyResolver::AddDependency(ISystem *pSystem, Args*...args)
 {
     (m_ppSystemsDependencies[pSystem].emplace_back(args), ...);
 }

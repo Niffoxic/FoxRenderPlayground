@@ -1,9 +1,4 @@
-#include "WindowsManager/WindowsManager.h"
-#include "RenderManager/RenderManager.h"
-#include "Engine/DependencyResolver/DependencyResolver.h"
-#include "Logger/Logger.h"
-#include "Timer/Timer.h"
-
+#include "Engine/FoxPlayground.h"
 #include <excpt.h>
 
 
@@ -33,7 +28,7 @@ int WINAPI WinMain(
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
-    SetUnhandledExceptionFilter(CrashHandler);
+    // SetUnhandledExceptionFilter(CrashHandler);
 
 #if defined(_DEBUG) || defined(ENABLE_TERMINAL)
     LOGGER_INIT_DESC logDesc{};
@@ -43,31 +38,11 @@ int WINAPI WinMain(
     INIT_GLOBAL_LOGGER(logDesc);
 #endif
 
-    // TODO: Test Only - Replace with Facade
     try
     {
-        WindowsManager  windows {};
-        RenderManager   renderer{ &windows };
-        Timer<float>    timer   {};
-
-        DependencyResolver resolver{};
-        resolver.Register(&windows, &renderer);
-        resolver.AddDependency(&renderer, &windows);
-
-        if (!resolver.InitializeSystems())  return EXIT_FAILURE;
-
-        timer.Start();
-        while (true)
-        {
-            timer.Tick();
-            if (const auto exitCode = WindowsManager::ProcessMessages()) return *exitCode;
-
-            resolver.UpdateStartSystems(timer.GetDeltaTime());
-
-            const float elapsed = timer.GetElapsedTime();
-            windows.AddOnWindowsTitle(ToFString(elapsed));
-            Sleep(1);
-        }
+        FoxPlayground playground{};
+        if (not playground.Init()) return EXIT_FAILURE;
+        return playground.Execute();
     }
     catch (const IException& e)
     {
