@@ -23,29 +23,23 @@ std::optional<int> WindowsManager::ProcessMessages()
     return {};
 }
 
-void WindowsManager::OnFrameBegin()
-{
-
-}
-
-void WindowsManager::OnFramePresent()
-{
-
-}
-
-void WindowsManager::OnFrameEnd()
-{
-
-}
-
 bool WindowsManager::OnInit()
 {
     return InitWindow();
 }
 
-bool WindowsManager::OnRelease()
+void WindowsManager::OnUpdateStart(float deltaTime)
 {
-    return true;
+
+}
+
+void WindowsManager::OnUpdateEnd()
+{
+
+}
+
+void WindowsManager::OnRelease()
+{
 }
 
 void WindowsManager::AddOnWindowsTitle(const FString &addOn) const

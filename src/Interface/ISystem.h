@@ -22,7 +22,7 @@ public:
     virtual ~ISystem() = default;
 
     virtual bool OnInit       () = 0;
-    virtual void OnUpdateStart() = 0;
+    virtual void OnUpdateStart(float deltaTime) = 0;
     virtual void OnUpdateEnd  () = 0;
     virtual void OnRelease    () = 0;
     virtual FString GetSystemName() const = 0;

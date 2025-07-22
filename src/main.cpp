@@ -1,9 +1,11 @@
 #include "WindowsManager/WindowsManager.h"
 #include "RenderManager/RenderManager.h"
+#include "Engine/DependencyResolver/DependencyResolver.h"
 #include "Logger/Logger.h"
 #include "Timer/Timer.h"
 
 #include <excpt.h>
+
 
 LONG WINAPI CrashHandler(EXCEPTION_POINTERS* ExceptionInfo)
 {
@@ -48,17 +50,19 @@ int WINAPI WinMain(
         RenderManager   renderer{ &windows };
         Timer<float>    timer   {};
 
-        if (!windows.OnInit())  return EXIT_FAILURE;
-        if (!renderer.OnInit()) return EXIT_FAILURE;
+        DependencyResolver resolver{};
+        resolver.Register(&windows, &renderer);
+        resolver.AddDependency(&renderer, &windows);
+
+        if (!resolver.InitializeSystems())  return EXIT_FAILURE;
 
         timer.Start();
         while (true)
         {
             timer.Tick();
             if (const auto exitCode = WindowsManager::ProcessMessages()) return *exitCode;
-            renderer.OnFrameBegin();
-            renderer.OnFramePresent();
-            renderer.OnFrameEnd();
+
+            resolver.UpdateStartSystems(timer.GetDeltaTime());
 
             const float elapsed = timer.GetElapsedTime();
             windows.AddOnWindowsTitle(ToFString(elapsed));

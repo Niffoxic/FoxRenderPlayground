@@ -115,7 +115,7 @@ public:
         return m_nTotalTime.load();
     }
 
-    _fox_Return_safe T GetDeltaTime()
+    _fox_Return_safe float GetDeltaTime()
     {
         return m_nDeltaTime.load();
     }

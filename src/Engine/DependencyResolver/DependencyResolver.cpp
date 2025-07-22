@@ -3,12 +3,11 @@
 //
 
 #include "DependencyResolver.h"
+#include "ExceptionHandler/IException.h"
+#include "Logger/Logger.h"
 
 #include <algorithm>
 #include <cassert>
-
-#include "ExceptionHandler/IException.h"
-#include "Logger/Logger.h"
 
 void DependencyResolver::Register(ISystem *pSystem)
 {
@@ -28,53 +27,6 @@ void DependencyResolver::Unregister(ISystem *pSystem)
     {
         return s->GetSystemName() == pSystem->GetSystemName();
     });
-}
-
-template<typename ... Args>
-bool DependencyResolver::InitializeSystems(Args &...args)
-{
-    LOG_WARNING("Attempting to initialize systems...");
-    SortTopologically();
-
-    for (ISystem* system: m_ppSystems)
-    {
-        if (!system->OnInit(args...))
-        {
-            LOG_ERROR("[DependencyResolver] Failed to {}", system->GetSystemName());
-            return false;
-        }
-        LOG_INFO("[DependencyResolver] Initialise {}...", system->GetSystemName());
-    }
-    LOG_SUCCESS("[DependencyResolver] Initialisation done.");
-    return true;
-}
-
-template<typename ... Args>
-void DependencyResolver::UpdateStartSystems(Args &...args) const
-{
-    for (ISystem* system: m_ppSystems)
-        system->OnUpdateStart(args...);
-
-}
-
-template<typename ... Args>
-void DependencyResolver::UpdateEndSystems(Args &...args) const
-{
-    for (ISystem* system: m_ppSystems)
-        system->OnUpdateEnd(args...);
-}
-
-template<typename ... Args>
-void DependencyResolver::ReleaseSystems(Args &...args)
-{
-    for (ISystem* system: m_ppSystems)
-        system->OnRelease(args...);
-}
-
-template<typename ... Args>
-void DependencyResolver::AddDependency(ISystem *pSystem, Args &...args)
-{
-    (m_ppSystemsDependencies[pSystem].emplace_back(args), ...);
 }
 
 void DependencyResolver::Clean()
@@ -111,10 +63,8 @@ void DependencyResolver::DFS(
 {
     if (recursionStack.contains(node))
     {
-        THROW_EXCEPTION_MSG(
-            "Cycle Detected with {}",
-            node->GetSystemName()
-        );
+        const FString msg =  "Cycle Detected with" + node->GetSystemName();
+        THROW_EXCEPTION_MSG(msg.c_str());
         sorted.clear(); // cycle detected!
         return;
     }
