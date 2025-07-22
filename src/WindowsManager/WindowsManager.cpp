@@ -3,7 +3,6 @@
 //
 
 #include "WindowsManager.h"
-
 #include "ExceptionHandler/WindowException.h"
 
 WindowsManager::~WindowsManager()
@@ -49,6 +48,12 @@ bool WindowsManager::OnRelease()
     return true;
 }
 
+void WindowsManager::AddOnWindowsTitle(const FString &addOn) const
+{
+    const FString title = m_szWindowsTitle + F_TEXT(" ") + addOn;
+    SetWindowText(m_hWnd, title.c_str());
+}
+
 void WindowsManager::SetFullScreen(bool fullScreen)
 {
     m_bFullScreen = fullScreen;
@@ -69,7 +74,7 @@ bool WindowsManager::InitWindow()
     wc.hCursor = LoadCursor(nullptr, IDC_ARROW);
     wc.hbrBackground = reinterpret_cast<HBRUSH>(COLOR_WINDOW + 1);
     wc.lpszMenuName = nullptr;
-    wc.lpszClassName = "WINDOW_CLASS_NAME";
+    wc.lpszClassName = F_TEXT("WINDOW_CLASS_NAME");
     wc.hIconSm = LoadIcon(nullptr, IDI_APPLICATION);
 
     if (!RegisterClassEx(&wc))

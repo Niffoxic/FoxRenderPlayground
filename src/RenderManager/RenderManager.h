@@ -7,7 +7,6 @@
 
 #include "Interface/ISystem.h"
 #include "Common/DefineVulkan.h"
-#include <sal.h>
 
 namespace Fox
 {
@@ -17,7 +16,7 @@ namespace Fox
 class RenderManager final: public ISystem, public IFrame
 {
 public:
-    explicit RenderManager(_In_ WindowsManager* winManager);
+    explicit RenderManager(_fox_In_ WindowsManager* winManager);
     ~RenderManager() override;
 
     //~ System Interface Impl
@@ -29,15 +28,14 @@ public:
     void OnFramePresent () override;
     void OnFrameEnd     () override;
 
-
-    FOX_CHECK_RETURN VkShaderModule CreateShaderModule(
-        _In_ const std::vector<char>& code) const
-    _Pre_satisfies_(code.size() > 0) _Success_(return != VK_NULL_HANDLE);
+    _fox_Return_safe VkShaderModule CreateShaderModule(
+        _fox_In_ const std::vector<char>& code) const
+    _fox_Pre_satisfies_(code.size() > 0) _fox_Success_(return != VK_NULL_HANDLE);
 
     void RecordCommandBuffer(
-        _In_ VkCommandBuffer commandBuffer,
-        _In_ uint32_t        imageIndex) const
-    _Pre_satisfies_(commandBuffer != VK_NULL_HANDLE);
+        _fox_In_ VkCommandBuffer commandBuffer,
+        _fox_In_ uint32_t        imageIndex) const
+    _fox_Pre_satisfies_(commandBuffer != VK_NULL_HANDLE);
 
 private:
     //~ Initialize Vulkan
@@ -60,7 +58,7 @@ private:
     void CreateSyncObjects();
 
 private:
-    _In_ WindowsManager* m_pWinManager{ nullptr };
+    WindowsManager* m_pWinManager{ nullptr };
 
     //~ Vulkan members
     VkInstance                  m_vkInstance      { VK_NULL_HANDLE };

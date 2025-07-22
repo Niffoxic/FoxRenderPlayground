@@ -24,9 +24,12 @@ public:
 
     ~WindowException() override = default;
 
+    _fox_Return_safe static FString GetExceptionMessageFromCode(DWORD exceptionCode);
+    _fox_Return_safe static FString GetErrorMessageFromCode(DWORD exceptionCode);
+
 protected:
-    FOX_CHECK_RETURN int         GetErrorCode        () const override;
-    FOX_CHECK_RETURN std::string GetAddOnErrorMessage() const _Success_(return.length() > 0) override;
+    _fox_Return_safe int         GetErrorCode        () const override;
+    _fox_Return_safe FString GetAddOnErrorMessage() const _Success_(return.length() > 0) override;
 
 private:
     mutable DWORD m_dwLastError;
