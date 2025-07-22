@@ -1,10 +1,19 @@
-# Build Location
-set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
-set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine")
-set(SHADER_INPUT_PATH "shaders")
-set(SHADER_OUTPUT_PATH "compiled_shaders")
-set(VULKAN_SDK_PATH "$ENV{VULKAN_SDK}")
+# --- Project Paths (User Configurable) ---
 
+# Project source directory (readonly internal)
+set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
+
+# Output folder for binaries
+set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine" CACHE PATH "Base output directory for all build artifacts")
+
+# Shader paths
+set(SHADER_INPUT_PATH "shaders" CACHE PATH "Input directory for raw shader source files")
+set(SHADER_OUTPUT_PATH "compiled_shaders" CACHE PATH "Output directory for compiled SPIR-V shaders")
+
+# Vulkan SDK path (optional override)
+set(VULKAN_SDK_PATH "$ENV{VULKAN_SDK}" CACHE PATH "Path to Vulkan SDK root directory (defaults to env: VULKAN_SDK)")
+
+# Write resource path file (auto-generated)
 file(WRITE "${CMAKE_SOURCE_DIR}/resource_paths.txt"
         "# AUTO_GENERATED_FILE_PLEASE_IGNORE\n"
         "OUTPUT_BASE=${OUTPUT_BASE}\n"
@@ -14,6 +23,7 @@ file(WRITE "${CMAKE_SOURCE_DIR}/resource_paths.txt"
         "VULKAN_SDK=${VULKAN_SDK_PATH}\n"
 )
 
+# --- Output Directories ---
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}")
 set(CMAKE_RUNTIME_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}")
 
@@ -22,6 +32,7 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
 
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}/libs/Debug")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
+
 
 find_package(Vulkan REQUIRED)
 

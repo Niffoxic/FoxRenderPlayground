@@ -3,4 +3,4 @@ OUTPUT_BASE=C:/Users/niffo/Desktop/NiffoxicRepo/FoxRenderEngine/build/FoxRenderE
 PROJECT_SOURCE=C:/Users/niffo/Desktop/NiffoxicRepo/FoxRenderEngine
 SHADER_INPUT_PATH=shaders
 SHADER_OUTPUT_PATH=compiled_shaders
-VULKAN_SDK=C:\VulkanSDK\1.4.313.2
+VULKAN_SDK=C:/VulkanSDK/1.4.313.2

@@ -43,10 +43,13 @@ If you'd rather build manually:
 ```bash
 git clone https://github.com/Niffoxic/FoxRenderEngine.git
 cd FoxRenderEngine
-mkdir build && cd build
-cmake ..
-cmake --build .
+mkdir build
+cd build
+cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Debug
+cmake --build . --config Debug
 ```
+
+Executables should be inside build/FoxRenderEngine/
 
 > This will automatically compile shaders via Python as part of the build process, as long as the VULKAN_SDK environment variable is set and Python is installed.
 
