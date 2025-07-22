@@ -43,40 +43,40 @@ public:
     FOX_CHECK_RETURN WINDOW_SIZE_DESC   GetWindowSize   () const { return m_descWindowSize; }
 
     //~ Setters
-    void SetWindowSize  (_In_ const WINDOW_SIZE_DESC& desc) { m_descWindowSize = desc;   }
-    void SetWindowsTitle(_In_ const std::string& title)     { m_szWindowsTitle = title;  }
-    void SetWindowsTitle(_In_z_ const char* title)          { m_szWindowsTitle = title;  }
-    void SetFullScreen  (_In_ bool fullScreen);
+    void SetWindowSize    (FOX_IN const WINDOW_SIZE_DESC& desc) { m_descWindowSize = desc;   }
+    void SetWindowsTitle  (FOX_IN const FString& title)         { m_szWindowsTitle = title;  }
+    void AddOnWindowsTitle(FOX_IN const FString& addOn) const;
+    void SetFullScreen    (FOX_IN bool fullScreen);
 
 private:
     FOX_CHECK_RETURN bool InitWindow();
 
     //~ Handle Windows Message
     FOX_CHECK_RETURN LRESULT MessageHandler(
-        _In_ HWND hwnd,
-        _In_ UINT msg,
-        _In_ WPARAM wParam,
-        _In_ LPARAM lParam);
+        FOX_IN HWND hwnd,
+        FOX_IN UINT msg,
+        FOX_IN WPARAM wParam,
+        FOX_IN LPARAM lParam);
 
     FOX_CHECK_RETURN static LRESULT CALLBACK WindowProcSetup(
-        _In_ HWND hwnd,
-        _In_ UINT msg,
-        _In_ WPARAM wParam,
-        _In_ LPARAM lParam);
+        FOX_IN HWND hwnd,
+        FOX_IN UINT msg,
+        FOX_IN WPARAM wParam,
+        FOX_IN LPARAM lParam);
 
     FOX_CHECK_RETURN static LRESULT CALLBACK WindowProcThunk(
-        _In_ HWND hwnd,
-        _In_ UINT msg,
-        _In_ WPARAM wParam,
-        _In_ LPARAM lParam);
+        FOX_IN HWND hwnd,
+        FOX_IN UINT msg,
+        FOX_IN WPARAM wParam,
+        FOX_IN LPARAM lParam);
 
 private:
     bool             m_bFullScreen{ false   };
     HINSTANCE        m_hInstance  { nullptr };
     HWND             m_hWnd       { nullptr };
 
-    std::string      m_szWindowsTitle { "Fox Render Playground"   };
-    WINDOW_SIZE_DESC m_descWindowSize { .Width = 1280u, .Height = 720u };
+    FString          m_szWindowsTitle { F_TEXT("Fox Render Playground")   };
+    WINDOW_SIZE_DESC m_descWindowSize { .Width = 1280u, .Height = 720u        };
 };
 
 #endif //WINDOWSMANAGER_H

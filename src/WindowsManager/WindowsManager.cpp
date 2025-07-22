@@ -3,7 +3,6 @@
 //
 
 #include "WindowsManager.h"
-
 #include "ExceptionHandler/WindowException.h"
 
 WindowsManager::~WindowsManager()
@@ -47,6 +46,12 @@ bool WindowsManager::OnInit()
 bool WindowsManager::OnRelease()
 {
     return true;
+}
+
+void WindowsManager::AddOnWindowsTitle(const FString &addOn) const
+{
+    const FString title = m_szWindowsTitle + F_TEXT(" ") + addOn;
+    SetWindowText(m_hWnd, title.c_str());
 }
 
 void WindowsManager::SetFullScreen(bool fullScreen)

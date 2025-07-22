@@ -78,8 +78,6 @@ target_include_directories(
 )
 
 set(SHADER_COMPILER "${PROJECT_SOURCE}/setup/compile_shaders.py")
-
-
 find_package(Python3 REQUIRED COMPONENTS Interpreter)
 
 file(GLOB_RECURSE SHADER_INPUTS
@@ -101,4 +99,3 @@ add_custom_command(
 add_custom_target(CompileShaders ALL
         DEPENDS "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}/.timestamp"
 )
-

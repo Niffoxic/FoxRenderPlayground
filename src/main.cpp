@@ -6,11 +6,13 @@
 
 #include <iostream>
 
+#include "Timer/Timer.h"
+
 int WINAPI WinMain(
-    _In_ HINSTANCE hInstance,
-    _In_ HINSTANCE hPrevInstance,
-    _In_ LPSTR lpCmdLine,
-    _In_ int nCmdShow)
+    FOX_IN HINSTANCE hInstance,
+    FOX_IN HINSTANCE hPrevInstance,
+    FOX_IN LPSTR lpCmdLine,
+    FOX_IN int nCmdShow)
 {
     UNREFERENCED_PARAMETER(hInstance);
     UNREFERENCED_PARAMETER(hPrevInstance);
@@ -27,19 +29,24 @@ int WINAPI WinMain(
     {
         WindowsManager windows{};
         RenderManager renderer{ &windows };
+        Timer<float> timer{};
 
         if (!windows.OnInit()) return EXIT_FAILURE;
         if (!renderer.OnInit()) return EXIT_FAILURE;
 
+        timer.Start();
         while (true)
         {
             if (const auto exitCode = WindowsManager::ProcessMessages())
                 return *exitCode;
+            timer.Tick();
 
             renderer.OnFrameBegin();
             renderer.OnFramePresent();
             renderer.OnFrameEnd();
 
+            const float elapsed = timer.GetElapsedTime();
+            windows.AddOnWindowsTitle(ToFString(elapsed));
             Sleep(1);
         }
     }
