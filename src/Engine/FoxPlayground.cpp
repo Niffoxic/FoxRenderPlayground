@@ -27,10 +27,7 @@ int FoxPlayground::Execute()
     while (true)
     {
         m_timer.Tick();
-        if (const auto exitCode = WindowsManager::ProcessMessages())
-        {
-            return *exitCode;
-        }
+        if (const auto exitCode = WindowsManager::ProcessMessages()) return *exitCode;
 
         m_resolver.UpdateStartSystems(m_timer.GetDeltaTime());
 

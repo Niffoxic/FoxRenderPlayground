@@ -23,7 +23,7 @@ void DependencyResolver::Unregister(ISystem *pSystem)
 {
     if (pSystem == nullptr) return;
 
-    std::erase_if(m_ppSystems, [pSystem](ISystem* s)
+    std::erase_if(m_ppSystems, [pSystem](const ISystem* s)
     {
         return s->GetSystemName() == pSystem->GetSystemName();
     });
@@ -61,6 +61,12 @@ void DependencyResolver::DFS(
     std::unordered_set<ISystem*> &recursionStack,
     std::vector<ISystem*> &sorted)
 {
+#if defined(_DEBUG) || defined(DEBUG)
+    if (node == nullptr) __debugbreak();
+#else
+    if (node == nullptr) THROW_EXCEPTION_MSG("Null node in DFS traversal.");
+#endif
+
     if (recursionStack.contains(node))
     {
         const FString msg =  "Cycle Detected with" + node->GetSystemName();
