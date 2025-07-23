@@ -36,9 +36,9 @@ public:
     _fox_Return_safe _fox_Ret_maybenull_ HWND      GetWinHandle    () const { return m_hWnd;      }
     _fox_Return_safe _fox_Ret_maybenull_ HINSTANCE GetWinHInstance () const { return m_hInstance; }
 
-    _fox_Return_safe const FString& GetWindowsTitle  () const { return m_szWindowsTitle; }
-    _fox_Return_safe bool               IsFullScreen () const { return m_bFullScreen;    }
-    _fox_Return_safe WINDOW_SIZE_DESC   GetWindowSize() const { return m_descWindowSize; }
+    _fox_Return_safe const FString&     GetWindowsTitle() const { return m_szWindowsTitle; }
+    _fox_Return_safe bool               IsFullScreen   () const { return m_bFullScreen;    }
+    _fox_Return_safe WINDOW_SIZE_DESC   GetWindowSize  () const { return m_descWindowSize; }
 
     //~ Setters
     void SetWindowSize    (_fox_In_ const WINDOW_SIZE_DESC& desc) { m_descWindowSize = desc;   }

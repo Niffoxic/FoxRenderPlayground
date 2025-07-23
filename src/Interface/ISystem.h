@@ -8,11 +8,11 @@
 #include "Common/Core.h"
 #include "Common/FObject.h"
 
-#define FOX_SYSTEM_GENERATOR(CLASS_NAME)     \
-public:                                      \
-    FString GetSystemName() const override   \
-    {                                        \
-        return F_TEXT(#CLASS_NAME);          \
+#define FOX_SYSTEM_GENERATOR(CLASS_NAME)\
+public:\
+    _fox_Return_safe FString GetSystemName() const override\
+    {\
+        return F_TEXT(#CLASS_NAME);\
     }
 
 
@@ -25,7 +25,7 @@ public:
     virtual void OnUpdateStart(float deltaTime) = 0;
     virtual void OnUpdateEnd  () = 0;
     virtual void OnRelease    () = 0;
-    virtual FString GetSystemName() const = 0;
+    _fox_Return_safe virtual FString GetSystemName() const = 0;
 };
 
 #endif //ISYSTEM_H
