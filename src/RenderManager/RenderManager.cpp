@@ -22,6 +22,7 @@ bool RenderManager::OnInit()
 void RenderManager::OnUpdateStart(float deltaTime)
 {
     vkDeviceWaitIdle(m_vkDevice);
+
     if (m_threadImageAvailableSemaphore.empty()
         || m_threadInFlightFences.empty()
         || m_threadRenderFinishedSemaphore.empty()) return;
@@ -30,10 +31,9 @@ void RenderManager::OnUpdateStart(float deltaTime)
         THROW_EXCEPTION_FMT("Current Count Exceeded: {}/{}", m_nCurrentFrame, Fox::MAX_FRAMES_IN_FLIGHT);
 
     vkWaitForFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame], VK_TRUE, UINT64_MAX);
-    vkResetFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame]);
 
     uint32_t imageIndex;
-    vkAcquireNextImageKHR(
+    VkResult result = vkAcquireNextImageKHR(
         m_vkDevice,
         m_vkSwapChain,
         UINT64_MAX,
@@ -42,7 +42,16 @@ void RenderManager::OnUpdateStart(float deltaTime)
         &imageIndex
     );
 
+    if (result == VK_ERROR_OUT_OF_DATE_KHR)
+    {
+        RecreateSwapChain();
+        return;
+    }
+    if (result != VK_SUCCESS & result != VK_SUBOPTIMAL_KHR) THROW_EXCEPTION_MSG("Failed to get swap chain image");
+
+    vkResetFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame]);
     vkResetCommandBuffer(m_vkCommandBuffer[m_nCurrentFrame], 0);
+
     RecordCommandBuffer(m_vkCommandBuffer[m_nCurrentFrame], imageIndex);
 
     VkSubmitInfo submitInfo{};
@@ -73,8 +82,10 @@ void RenderManager::OnUpdateStart(float deltaTime)
     presentInfo.pSwapchains     = swapChains;
     presentInfo.pImageIndices   = &imageIndex;
 
-    if (vkQueuePresentKHR(m_vkPresentQueue, &presentInfo) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed to present");
+    result = vkQueuePresentKHR(m_vkPresentQueue, &presentInfo);
+
+    if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR || m_bWindowResizeHandled) RecreateSwapChain();
+    else if (result != VK_SUCCESS) THROW_EXCEPTION_MSG("Failed to present");
 
     m_nCurrentFrame = (m_nCurrentFrame + 1) % Fox::MAX_FRAMES_IN_FLIGHT;
 }
@@ -99,9 +110,6 @@ void RenderManager::OnRelease()
     //~ Clear Render Related stuff
     vkDestroyCommandPool(m_vkDevice, m_vkCommandPool, nullptr);
 
-    for (const auto framebuffer : m_vkSwapChainFramebuffers)
-        vkDestroyFramebuffer(m_vkDevice, framebuffer, nullptr);
-
     vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeFrag, nullptr);
     vkDestroyShaderModule(m_vkDevice, m_shaderTestCubeVert, nullptr);
 
@@ -110,9 +118,7 @@ void RenderManager::OnRelease()
     vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
 
     //~ Clean Swap chain
-    for (auto& view: m_vkSwapChainImageViews)
-        vkDestroyImageView(m_vkDevice, view, nullptr);
-    vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
+    ReleaseSwapChain();
 
     //~ Clean Vulkan resources
     vkDestroyDevice(m_vkDevice, nullptr);
@@ -696,4 +702,26 @@ void RenderManager::CreateSyncObjects()
     }
 
     LOG_SUCCESS("GPU-thread protection locks are created");
+}
+
+void RenderManager::ReleaseSwapChain() const
+{
+    for (size_t i = 0; i < m_vkSwapChainFramebuffers.size(); i++)
+        vkDestroyFramebuffer(m_vkDevice, m_vkSwapChainFramebuffers[i], nullptr);
+
+    for (size_t i = 0; i < m_vkSwapChainImageViews.size(); i++)
+        vkDestroyImageView(m_vkDevice, m_vkSwapChainImageViews[i], nullptr);
+
+    vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
+}
+
+void RenderManager::RecreateSwapChain()
+{
+    m_bWindowResizeHandled = false;
+    vkDeviceWaitIdle(m_vkDevice);
+    ReleaseSwapChain();
+
+    CreateSwapChain();
+    CreateImageViews();
+    CreateFramebuffers();
 }

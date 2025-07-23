@@ -55,6 +55,10 @@ private:
     void CreateCommandBuffers();
     void CreateSyncObjects();
 
+    //~ Test Events
+    void ReleaseSwapChain() const;
+    void RecreateSwapChain();
+
 private:
     WindowsManager* m_pWinManager{ nullptr };
 
@@ -93,6 +97,7 @@ private:
     std::vector<VkFence>          m_threadInFlightFences;
 
     uint32_t m_nCurrentFrame{ 0 };
+    bool m_bWindowResizeHandled{ false };
 };
 
 #endif //RENDERMANAGER_H

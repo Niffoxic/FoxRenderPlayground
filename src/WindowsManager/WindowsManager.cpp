@@ -79,7 +79,7 @@ bool WindowsManager::InitWindow()
         return false;
     }
 
-    DWORD style = WS_OVERLAPPED | WS_CAPTION | WS_SYSMENU | WS_MINIMIZEBOX;
+    DWORD style = WS_OVERLAPPEDWINDOW;
 
     RECT rect = m_descWindowSize.GetRect();
     if (!AdjustWindowRect(&rect, style, FALSE))
@@ -120,6 +120,31 @@ LRESULT WindowsManager::MessageHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARA
 
     switch (msg)
     {
+    case WM_SIZE:
+    {
+        const UINT width  = LOWORD(lParam);
+        const UINT height = HIWORD(lParam);
+
+        WINDOW_SIZE_DESC desc{};
+        desc.Height = height;
+        desc.Width = width;
+        SetWindowSize(desc);
+
+        break;
+    }
+    case WM_SIZING:
+    {
+        const RECT* pRect = reinterpret_cast<RECT*>(lParam);
+        const UINT width  = pRect->right - pRect->left;
+        const UINT height = pRect->bottom - pRect->top;
+
+        WINDOW_SIZE_DESC desc{};
+        desc.Height = height;
+        desc.Width = width;
+        SetWindowSize(desc);
+
+        break;
+    }
     case WM_CLOSE:
     {
         PostQuitMessage(0);
