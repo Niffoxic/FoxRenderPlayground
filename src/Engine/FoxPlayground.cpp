@@ -4,6 +4,8 @@
 
 #include "FoxPlayground.h"
 
+#include "WindowsManager/Inputs/InputKeyboardSingleton.h"
+
 FoxPlayground::FoxPlayground()
 {
     m_pWindowsManager = std::make_unique<WindowsManager>();
@@ -31,8 +33,15 @@ int FoxPlayground::Execute()
 
         m_resolver.UpdateStartSystems(m_timer.GetDeltaTime());
 
+        //~ Debugging stuffs
+        InputKeyboardSingleton::Get().DebugKeysPressed();
+
         const float elapsed = m_timer.GetElapsedTime();
         m_pWindowsManager->AddOnWindowsTitle(ToFString(elapsed));
+
+        //~ End - Debugging stuffs
+
+        m_resolver.UpdateEndSystems();
         Sleep(1);
     }
 }

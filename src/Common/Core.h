@@ -18,6 +18,7 @@
     #define _fox_Success_(x)        _Success_(x)
     #define _fox_Ret_maybenull_     _Ret_maybenull_
     #define _fox_Pre_satisfies_(x)  _Pre_satisfies_(x)
+    #define _fox_Returns_true_if_(x) _Post_satisfies_(return == true)
 
 #elif defined(__clang__) || defined(__GNUC__)
 #warning "You building without MSCV don't blame me if dont work"
@@ -29,6 +30,7 @@
     #define _fox_Success_(x)        _Success_(x)
     #define _fox_Ret_maybenull_     _Ret_maybenull_
     #define _fox_Pre_satisfies_(x)
+    #define _fox_Returns_true_if_(x)
 #endif
 
 #pragma endregion ANNOTATIONS
@@ -59,7 +61,7 @@
 inline FString ToFString(const char* str)
 {
 #if defined(FOX_STRING_IS_ANSI)
-    return std::string(str);
+    return { str };
 #else
     size_t len = std::strlen(str);
     return std::wstring(str, str + len);
