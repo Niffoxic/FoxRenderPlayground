@@ -4,7 +4,8 @@
 
 #include "FoxPlayground.h"
 
-#include "WindowsManager/Inputs/InputKeyboardSingleton.h"
+#include "WindowsManager/Inputs/KeyboardSingleton.h"
+#include "WindowsManager/Inputs/MouseSingleton.h"
 
 FoxPlayground::FoxPlayground()
 {
@@ -33,13 +34,13 @@ int FoxPlayground::Execute()
 
         m_resolver.UpdateStartSystems(m_timer.GetDeltaTime());
 
-        //~ Debugging stuffs
-        InputKeyboardSingleton::Get().DebugKeysPressed();
+#if defined(DEBUG) || defined(_DEBUG)
+        KeyboardSingleton::Get().DebugKeysPressed();
+        MouseSingleton::Get().DebugKeysPressed();
 
         const float elapsed = m_timer.GetElapsedTime();
         m_pWindowsManager->AddOnWindowsTitle(ToFString(elapsed));
-
-        //~ End - Debugging stuffs
+#endif
 
         m_resolver.UpdateEndSystems();
         Sleep(1);

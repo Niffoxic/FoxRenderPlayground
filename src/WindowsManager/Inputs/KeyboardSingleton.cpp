@@ -2,9 +2,9 @@
 // Created by niffo on 7/23/2025.
 //
 
-#include "InputKeyboardSingleton.h"
+#include "KeyboardSingleton.h"
 
-void InputKeyboardSingleton::HandleMessage(
+void KeyboardSingleton::HandleMessage(
     UINT message,
     WPARAM wParam,
     LPARAM lParam
@@ -17,12 +17,12 @@ void InputKeyboardSingleton::HandleMessage(
     {
     case WM_KEYDOWN:
     case WM_SYSKEYDOWN:
-        m_btKeyStates.set(static_cast<KEY>(wParam), true);
+        m_btKeyStates.set(static_cast<KeyStroke>(wParam), true);
         break;
 
     case WM_KEYUP:
     case WM_SYSKEYUP:
-        m_btKeyStates.set(static_cast<KEY>(wParam), false);
+        m_btKeyStates.set(static_cast<KeyStroke>(wParam), false);
         break;
 
     default:
@@ -30,12 +30,12 @@ void InputKeyboardSingleton::HandleMessage(
     }
 }
 
-void InputKeyboardSingleton::Reset()
+void KeyboardSingleton::Reset()
 {
     m_btKeyStates.reset();
 }
 
-bool InputKeyboardSingleton::IsKeyDown(const KEY key) const
+bool KeyboardSingleton::IsKeyDown(const KeyStroke key) const
 {
     if (key >= KEY_BOUND)
     {
@@ -49,14 +49,14 @@ bool InputKeyboardSingleton::IsKeyDown(const KEY key) const
     return m_btKeyStates.test(key);
 }
 
-bool InputKeyboardSingleton::operator[](const KEY key) const
+bool KeyboardSingleton::operator[](const KeyStroke key) const
 {
     return IsKeyDown(key);
 }
 
-void InputKeyboardSingleton::DebugKeysPressed() const
+void KeyboardSingleton::DebugKeysPressed() const
 {
-    for (KEY key = 0; key < KEY_BOUND; ++key)
+    for (KeyStroke key = 0; key < KEY_BOUND; ++key)
     {
         if (!m_btKeyStates.test(key)) continue;
 

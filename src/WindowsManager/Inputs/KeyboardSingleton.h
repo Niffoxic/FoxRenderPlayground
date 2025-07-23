@@ -10,11 +10,11 @@
 #include <bitset>
 
 
-using KEY = uint16_t;
+using KeyStroke = uint16_t;
 
-class InputKeyboardSingleton final: public ISingleton<InputKeyboardSingleton>
+class KeyboardSingleton final: public ISingleton<KeyboardSingleton>
 {
-    friend class ISingleton<InputKeyboardSingleton>;
+    friend class ISingleton<KeyboardSingleton>;
 public:
     void HandleMessage(
         _fox_In_ UINT message,
@@ -27,17 +27,17 @@ public:
 
     //~ Query functions
     _fox_Success_(return == true)
-    bool IsKeyDown (_fox_In_ KEY key) _fox_Pre_satisfies_(KEY < KEY_BOUND)  const;
+    bool IsKeyDown (_fox_In_ KeyStroke key) _fox_Pre_satisfies_(KeyStroke < KEY_BOUND)  const;
     _fox_Success_(return == true)
-    bool operator[](_fox_In_ KEY key) _fox_Pre_satisfies_(KEY < KEY_BOUND)  const;
+    bool operator[](_fox_In_ KeyStroke key) _fox_Pre_satisfies_(KeyStroke < KEY_BOUND)  const;
 
     void DebugKeysPressed() const;
 
 private:
-    InputKeyboardSingleton() = default;
+    KeyboardSingleton() = default;
 
 private:
-    static constexpr KEY KEY_BOUND{ 256 };
+    static constexpr KeyStroke KEY_BOUND{ 256 };
     std::bitset<KEY_BOUND> m_btKeyStates{};
 };
 

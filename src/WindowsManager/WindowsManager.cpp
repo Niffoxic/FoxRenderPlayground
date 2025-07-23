@@ -4,7 +4,8 @@
 
 #include "WindowsManager.h"
 #include "ExceptionHandler/WindowException.h"
-#include "Inputs/InputKeyboardSingleton.h"
+#include "Inputs/KeyboardSingleton.h"
+#include "Inputs/MouseSingleton.h"
 
 WindowsManager::~WindowsManager()
 {
@@ -36,7 +37,8 @@ void WindowsManager::OnUpdateStart(float deltaTime)
 
 void WindowsManager::OnUpdateEnd()
 {
-    InputKeyboardSingleton::Get().Reset();
+    KeyboardSingleton::Get().Reset();
+    MouseSingleton::Get().Reset();
 }
 
 void WindowsManager::OnRelease()
@@ -113,7 +115,9 @@ bool WindowsManager::InitWindow()
 
 LRESULT WindowsManager::MessageHandler(HWND hwnd, UINT msg, WPARAM wParam, LPARAM lParam)
 {
-    InputKeyboardSingleton::Get().HandleMessage(msg, wParam, lParam);
+    KeyboardSingleton::Get().HandleMessage(msg, wParam, lParam);
+    MouseSingleton::Get().HandleMessage(msg, wParam, lParam);
+
     switch (msg)
     {
     case WM_CLOSE:
