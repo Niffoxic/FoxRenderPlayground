@@ -10,6 +10,7 @@
 
 //~ TODO: Only for test replace with Reflection systems
 #include <glm/glm.hpp>
+#include <cmath>
 
 typedef struct TEST_VERTEX_DESC
 {
@@ -43,7 +44,35 @@ typedef struct TEST_VERTEX_DESC
 
 } VERTEX_DESC;
 
+_fox_Return_safe
+static std::vector<VERTEX_DESC> GenerateColorfulStarVertices(
+    const uint32_t numPoints    = 5,
+    const float    outerRadius  = 1.0f,
+    const float    innerRadius  = 0.5f)
+{
+    std::vector<VERTEX_DESC> vertices;
 
+    constexpr float PI = 3.14159265359f;
+    constexpr float TWO_PI = 2.0f * PI;
+    const float angleStep = TWO_PI / static_cast<float>(numPoints * 2);
+
+    for (uint32_t i = 0; i < numPoints * 2; ++i)
+    {
+        const float angle = i * angleStep;
+        const float radius = (i % 2 == 0) ? outerRadius : innerRadius;
+        const glm::vec2 pos = glm::vec2(std::cos(angle), std::sin(angle)) * radius;
+
+        glm::vec3 color = glm::vec3(
+            0.5f + 0.5f * std::cos(angle),
+            0.5f + 0.5f * std::cos(angle + 2.0f),
+            0.5f + 0.5f * std::cos(angle + 4.0f)
+        );
+
+        vertices.push_back({ pos, color });
+    }
+
+    return vertices;
+}
 
 namespace Fox
 {
@@ -89,6 +118,7 @@ private:
     void CreateRenderPipeline();
     void CreateFramebuffers();
     void CreateCommandPool();
+    void CreateVertexBuffer();
     void CreateCommandBuffers();
     void CreateSyncObjects();
 
@@ -121,20 +151,23 @@ private:
     std::vector<VkFramebuffer> m_vkSwapChainFramebuffers{};
 
     // TODO: Remove it later its only for test
-    VkRenderPass     m_vkRenderPass      { VK_NULL_HANDLE };
-    VkPipelineLayout m_vkPipelineLayout  { VK_NULL_HANDLE };
-    VkPipeline       m_vkGraphicsPipeline{ VK_NULL_HANDLE };
-    VkShaderModule   m_shaderTestCubeVert{ VK_NULL_HANDLE };
-    VkShaderModule   m_shaderTestCubeFrag{ VK_NULL_HANDLE };
-    VkCommandPool    m_vkCommandPool     { VK_NULL_HANDLE };
+    VkRenderPass     m_vkRenderPass        { VK_NULL_HANDLE };
+    VkPipelineLayout m_vkPipelineLayout    { VK_NULL_HANDLE };
+    VkPipeline       m_vkGraphicsPipeline  { VK_NULL_HANDLE };
+    VkShaderModule   m_shaderTestCubeVert  { VK_NULL_HANDLE };
+    VkShaderModule   m_shaderTestCubeFrag  { VK_NULL_HANDLE };
+    VkCommandPool    m_vkCommandPool       { VK_NULL_HANDLE };
+    VkBuffer         m_vkVertexBuffer      { VK_NULL_HANDLE };
+    VkDeviceMemory   m_vkVertexBufferMemory{ VK_NULL_HANDLE };
 
     std::vector<VkCommandBuffer>  m_vkCommandBuffer;
     std::vector<VkSemaphore>      m_threadImageAvailableSemaphore;
     std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore;
     std::vector<VkFence>          m_threadInFlightFences;
 
-    uint32_t m_nCurrentFrame{ 0 };
-    bool m_bWindowResizeHandled{ false };
+    uint32_t m_vertexCounts        {   0   };
+    uint32_t m_nCurrentFrame       {   0   };
+    bool     m_bWindowResizeHandled{ false };
 };
 
 #endif //RENDERMANAGER_H

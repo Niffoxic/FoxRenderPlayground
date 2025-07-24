@@ -26,6 +26,7 @@ typedef struct QUEUE_FAMILY_INDEX_DESC
     std::optional<uint32_t> GraphicsFamily;
     std::optional<uint32_t> PresentFamily;
 
+    _fox_Return_safe
     bool IsInitialized() const
     {
         return
@@ -40,6 +41,7 @@ typedef struct SWAP_CHAIN_SUPPORT_DESC
     std::vector<VkSurfaceFormatKHR> Formats;
     std::vector<VkPresentModeKHR> PresentModes;
 
+    _fox_Return_safe
     bool IsInitialized() const
     {
         return not Formats.empty() && not PresentModes.empty();
@@ -163,10 +165,31 @@ namespace Fox
         return requiredExtensions.empty();
     }
 
+    _fox_Return_safe _fox_Pre_satisfies_(device != VK_NULL_HANDLE) _fox_Success_(return != 0)
+    inline uint32_t FindMemoryType(VkPhysicalDevice device, const uint32_t filter, VkMemoryPropertyFlags properties)
+    {
+        VkPhysicalDeviceMemoryProperties memoryProperties;
+        vkGetPhysicalDeviceMemoryProperties(device, &memoryProperties);
+
+        for (uint32_t i = 0; i < memoryProperties.memoryTypeCount; i++)
+        {
+            if ((filter & (1 << i)) && (memoryProperties.memoryTypes[i].propertyFlags & properties) == properties)
+                return i;
+        }
+
+#if defined(DEBUG) || defined(_DEBUG)
+        __debugbreak();
+#else
+        THROW_EXCEPTION_MSG("Failed to Find memory type: crucial for creating vertex buffer");
+#endif
+        return 0;
+    }
+
     #pragma endregion
 
     #pragma region DEBUG_IMPL
 
+    _fox_Return_safe
     inline VkResult CreateDebugUtilsMessengerEXT(
         VkInstance instance,
         const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,
