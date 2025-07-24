@@ -8,6 +8,43 @@
 #include "Interface/ISystem.h"
 #include "Common/DefineVulkan.h"
 
+//~ TODO: Only for test replace with Reflection systems
+#include <glm/glm.hpp>
+
+typedef struct TEST_VERTEX_DESC
+{
+    glm::vec2 Position;
+    glm::vec3 Color;
+
+    static VkVertexInputBindingDescription GetBindingDescription()
+    {
+        VkVertexInputBindingDescription desc{};
+        desc.binding = 0;
+        desc.stride = sizeof(TEST_VERTEX_DESC);
+        desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
+        return desc;
+    }
+
+    static std::array<VkVertexInputAttributeDescription, 2> GetAttributeDescriptions()
+    {
+        std::array<VkVertexInputAttributeDescription, 2> desc{};
+        desc[0].binding = 0;
+        desc[0].location = 0;
+        desc[0].format = VK_FORMAT_R32G32_SFLOAT;
+        desc[0].offset = offsetof(TEST_VERTEX_DESC, Position);
+
+        desc[1].binding = 0;
+        desc[1].location = 1;
+        desc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
+        desc[1].offset = offsetof(TEST_VERTEX_DESC, Color);
+
+        return desc;
+    }
+
+} VERTEX_DESC;
+
+
+
 namespace Fox
 {
     inline constexpr uint32_t MAX_FRAMES_IN_FLIGHT{ 2u };

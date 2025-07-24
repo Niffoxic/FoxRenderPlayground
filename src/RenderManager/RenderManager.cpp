@@ -464,9 +464,15 @@ void RenderManager::CreateRenderPipeline()
 
     //~ IA
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount   = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    //~ Vertex Buffer
+    auto vertexDesc = VERTEX_DESC::GetBindingDescription();
+    auto attributeDesc = VERTEX_DESC::GetAttributeDescriptions();
+    vertexInputInfo.vertexBindingDescriptionCount       = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount     = static_cast<uint32_t>(attributeDesc.size());
+    vertexInputInfo.pVertexAttributeDescriptions        = attributeDesc.data();
+    vertexInputInfo.pVertexBindingDescriptions          = &vertexDesc;
 
     //~ Not indices so we gonna send it
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
