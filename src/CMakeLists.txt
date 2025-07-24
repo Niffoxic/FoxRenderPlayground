@@ -61,6 +61,17 @@ target_include_directories(imgui_lib PUBLIC ${imgui_SOURCE_DIR})
 target_include_directories(imgui_lib PUBLIC ${imgui_SOURCE_DIR}/backends)
 # ========================= Linked Imgui =========================
 
+# ========================= Link GLM =========================
+FetchContent_Declare(
+        glm
+        GIT_REPOSITORY https://github.com/g-truc/glm.git
+        GIT_TAG        master
+)
+FetchContent_MakeAvailable(glm)
+
+# ========================= Linked GLM =========================
+
+
 # Main Stuff
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
         ${CMAKE_CURRENT_SOURCE_DIR}/*.cpp
@@ -85,6 +96,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR} # Its just what I prefer
         ${CMAKE_CURRENT_SOURCE_DIR}/Utils # same reason I dont like utils then this then that....
         imgui_lib
+        ${glm_SOURCE_DIR}
 )
 
 set(SHADER_COMPILER "${PROJECT_SOURCE}/setup/compile_shaders.py")

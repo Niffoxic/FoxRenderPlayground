@@ -99,6 +99,9 @@ void RenderManager::OnRelease()
 {
     vkDeviceWaitIdle(m_vkDevice);
 
+    vkDestroyBuffer(m_vkDevice, m_vkVertexBuffer, nullptr);
+    vkFreeMemory(m_vkDevice, m_vkVertexBufferMemory, nullptr);
+
     //~ Release thread locks
     for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -168,6 +171,7 @@ bool RenderManager::InitVulkan()
     CreateRenderPipeline();
     CreateFramebuffers();
     CreateCommandPool();
+    CreateVertexBuffer();
     CreateCommandBuffers();
     CreateSyncObjects();
     return true;
@@ -464,14 +468,20 @@ void RenderManager::CreateRenderPipeline()
 
     //~ IA
     VkPipelineVertexInputStateCreateInfo vertexInputInfo{};
-    vertexInputInfo.sType                           = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
-    vertexInputInfo.vertexBindingDescriptionCount   = 0;
-    vertexInputInfo.vertexAttributeDescriptionCount = 0;
+    vertexInputInfo.sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO;
+
+    //~ Vertex Data
+    auto vertexDesc = VERTEX_DESC::GetBindingDescription();
+    auto attributeDesc = VERTEX_DESC::GetAttributeDescriptions();
+    vertexInputInfo.vertexBindingDescriptionCount       = 1;
+    vertexInputInfo.vertexAttributeDescriptionCount     = static_cast<uint32_t>(attributeDesc.size());
+    vertexInputInfo.pVertexAttributeDescriptions        = attributeDesc.data();
+    vertexInputInfo.pVertexBindingDescriptions          = &vertexDesc;
 
     //~ Not indices so we gonna send it
     VkPipelineInputAssemblyStateCreateInfo inputAssembly{};
     inputAssembly.sType                  = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO;
-    inputAssembly.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST;
+    inputAssembly.topology               = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_FAN;
     inputAssembly.primitiveRestartEnable = VK_FALSE;
 
     //~ Viewport
@@ -606,6 +616,49 @@ void RenderManager::CreateCommandPool()
     LOG_SUCCESS("Command pool Created");
 }
 
+void RenderManager::CreateVertexBuffer()
+{
+    LOG_WARNING("Attempting to create vertex buffer");
+    const std::vector<VERTEX_DESC> vertices = GenerateColorfulStarVertices(15);
+    m_vertexCounts = static_cast<uint32_t>(vertices.size());
+
+    VkBufferCreateInfo info{};
+    info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    info.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    info.size        = sizeof(vertices[0]) * vertices.size();
+
+    if (vkCreateBuffer(m_vkDevice, &info, nullptr, &m_vkVertexBuffer) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed creating vertex buffer");
+
+    VkMemoryRequirements memReqs;
+    vkGetBufferMemoryRequirements(m_vkDevice, m_vkVertexBuffer, &memReqs);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType          = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memReqs.size;
+    allocInfo.memoryTypeIndex = Fox::FindMemoryType
+    (
+        m_vkPhysicalDevice,
+        memReqs.memoryTypeBits,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
+    );
+
+    if (vkAllocateMemory(m_vkDevice, &allocInfo, nullptr, &m_vkVertexBufferMemory) != VK_SUCCESS)
+    {
+        THROW_EXCEPTION_MSG("Failed allocating vertex buffer memory");
+    }
+
+    vkBindBufferMemory(m_vkDevice, m_vkVertexBuffer, m_vkVertexBufferMemory, 0);
+
+    void* data;
+    vkMapMemory(m_vkDevice, m_vkVertexBufferMemory, 0, info.size, 0, &data);
+    memcpy(data, &vertices[0], static_cast<size_t>(info.size));
+    vkUnmapMemory(m_vkDevice, m_vkVertexBufferMemory);
+
+    LOG_SUCCESS("Vertex Buffer Created");
+}
+
 void RenderManager::CreateCommandBuffers()
 {
     m_vkCommandBuffer.resize(Fox::MAX_FRAMES_IN_FLIGHT);
@@ -663,7 +716,12 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     scissor.extent   = m_descSwapChainSupportDetails.Extent;
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
-    vkCmdDraw(commandBuffer, 66, 1, 0, 0);
+    //~ Set Vertex buffer
+    VkBuffer vertexBuffers[] = { m_vkVertexBuffer };
+    VkDeviceSize offsets[] = { 0 };
+    vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
+
+    vkCmdDraw(commandBuffer, m_vertexCounts, 1, 0, 0);
 
     vkCmdEndRenderPass(commandBuffer);
 
@@ -706,11 +764,11 @@ void RenderManager::CreateSyncObjects()
 
 void RenderManager::ReleaseSwapChain() const
 {
-    for (size_t i = 0; i < m_vkSwapChainFramebuffers.size(); i++)
-        vkDestroyFramebuffer(m_vkDevice, m_vkSwapChainFramebuffers[i], nullptr);
+    for (auto m_vkSwapChainFramebuffer : m_vkSwapChainFramebuffers)
+        vkDestroyFramebuffer(m_vkDevice, m_vkSwapChainFramebuffer, nullptr);
 
-    for (size_t i = 0; i < m_vkSwapChainImageViews.size(); i++)
-        vkDestroyImageView(m_vkDevice, m_vkSwapChainImageViews[i], nullptr);
+    for (auto m_vkSwapChainImageView : m_vkSwapChainImageViews)
+        vkDestroyImageView(m_vkDevice, m_vkSwapChainImageView, nullptr);
 
     vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);
 }
