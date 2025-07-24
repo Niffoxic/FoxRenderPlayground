@@ -26,7 +26,6 @@ typedef struct _FX_MOUSE_STATE_DESC
     constexpr LONG GetDeltaX() const noexcept { return Delta.x; }
     _fox_Return_safe
     constexpr LONG GetDeltaY() const noexcept { return Delta.y; }
-
 } MOUSE_STATE_DESC;
 
 enum class EMouseButtons: MouseButton

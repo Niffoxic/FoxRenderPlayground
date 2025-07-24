@@ -1,55 +1,13 @@
 #version 450
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) in vec2 inPosition;
+layout(location = 1) in vec3 inColor;
 
-const vec2 positions[66] = vec2[](
-// Center blob
-vec2( 0.0,  0.0), vec2( 0.3,  0.0), vec2( 0.15,  0.2),
-vec2( 0.0,  0.0), vec2( 0.15,  0.2), vec2( 0.0,  0.4),
-vec2( 0.0,  0.0), vec2( 0.0,  0.4), vec2(-0.15, 0.2),
-vec2( 0.0,  0.0), vec2(-0.15, 0.2), vec2(-0.3,  0.0),
-vec2( 0.0,  0.0), vec2(-0.3,  0.0), vec2(-0.15, -0.2),
-vec2( 0.0,  0.0), vec2(-0.15,-0.2), vec2( 0.0, -0.4),
-vec2( 0.0,  0.0), vec2( 0.0, -0.4), vec2( 0.15, -0.2),
-vec2( 0.0,  0.0), vec2( 0.15, -0.2), vec2( 0.3,  0.0),
+layout(location = 0) out vec3 outColor;
 
-// Outer swirl
-vec2( 0.0,  0.5), vec2( 0.1,  0.6), vec2( 0.2,  0.5),
-vec2( 0.0,  0.5), vec2( 0.2,  0.5), vec2( 0.1,  0.4),
-
-vec2( 0.5,  0.0), vec2( 0.6,  0.1), vec2( 0.5,  0.2),
-vec2( 0.5,  0.0), vec2( 0.5,  0.2), vec2( 0.4,  0.1),
-
-vec2( 0.0, -0.5), vec2( 0.1, -0.6), vec2( 0.2, -0.5),
-vec2( 0.0, -0.5), vec2( 0.2, -0.5), vec2( 0.1, -0.4),
-
-vec2(-0.5,  0.0), vec2(-0.6,  0.1), vec2(-0.5,  0.2),
-vec2(-0.5,  0.0), vec2(-0.5,  0.2), vec2(-0.4,  0.1),
-
-// Final 2 swirl triangles
-vec2(-0.1, -0.6), vec2(-0.2, -0.5), vec2(-0.1, -0.4),
-vec2(-0.1,  0.6), vec2(-0.2,  0.5), vec2(-0.1,  0.4),
-
-// LAST 4 triangles to complete 66 vertices
-vec2( 0.4,  0.3), vec2( 0.6,  0.3), vec2( 0.5,  0.4),
-vec2(-0.4,  0.3), vec2(-0.6,  0.3), vec2(-0.5,  0.4),
-vec2(-0.3, -0.4), vec2(-0.5, -0.3), vec2(-0.4, -0.5),
-vec2( 0.3, -0.4), vec2( 0.5, -0.3), vec2( 0.4, -0.5)
-);
-
-const vec3 colors[22] = vec3[](
-vec3(0.8, 0.2, 0.2), vec3(0.2, 0.8, 0.2), vec3(0.2, 0.2, 0.8),
-vec3(0.8, 0.8, 0.2), vec3(0.8, 0.2, 0.8), vec3(0.2, 0.8, 0.8),
-vec3(0.6, 0.4, 0.2), vec3(0.9, 0.3, 0.1), vec3(0.3, 0.9, 0.1),
-vec3(0.1, 0.3, 0.9), vec3(0.9, 0.1, 0.3), vec3(0.5, 0.5, 0.5),
-vec3(0.4, 0.6, 0.2), vec3(0.2, 0.4, 0.6), vec3(0.6, 0.2, 0.4),
-vec3(0.3, 0.3, 0.3), vec3(0.7, 0.2, 0.5), vec3(0.5, 0.7, 0.2),
-vec3(0.2, 0.5, 0.7), vec3(0.7, 0.5, 0.2), vec3(0.3, 0.7, 0.4),
-vec3(0.4, 0.3, 0.7)
-);
 
 void main()
 {
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-    fragColor = colors[gl_VertexIndex / 3];
+    gl_Position = vec4(inPosition, 0.0f, 1.0f);
+    outColor = inColor;
 }
