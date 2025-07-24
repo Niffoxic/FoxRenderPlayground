@@ -41,8 +41,8 @@ python build_installer.py
 ### Build with CMake
 If you'd rather build manually:
 ```bash
-git clone https://github.com/Niffoxic/FoxRenderEngine.git
-cd FoxRenderEngine
+git clone https://github.com/Niffoxic/FoxRenderPlayground.git
+cd FoxRenderPlayground
 mkdir build
 cd build
 cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Debug
