@@ -1,7 +1,7 @@
-# Fox Render Engine
+# Fox Render Playground
 
 > Current Output: Nothing fancy yet but it'll be fun to see how far it evolves later!
-![Fox Render Engine Demo](doc/output/output-1.gif)
+![Fox Render Playground Demo](doc/output/output-1.gif)
 
 This is a Windows-specific graphics project built using **Vulkan** and the **Win32 API**, designed to test and experiment with:
 
@@ -26,7 +26,7 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 
 > Recommended: Use the GUI installer for first-time setup. It handles everything — installing CMake (if missing), Vulkan SDK, compiling shaders, and building the project.
 
-### 🔄 Quick Start with GUI Installer
+### Quick Start with GUI Installer
 
 ![GUI Installer Preview](doc/installer-image.png)
 
