@@ -53,9 +53,9 @@ class InstallerUI:
 
             for label in val.get_content():
                 if val.is_detected(label):
-                    self.content_frame.add_scroll_label(f"• {label} (detected ✅)")
+                    self.content_frame.add_scroll_label(f"• {label} (detected)")
                 else:
-                    self.content_frame.add_scroll_label(f"• {label} (not found ❌)")
+                    self.content_frame.add_scroll_label(f"• {label} (not found)")
                     val.set_option_widget(scroll_area)
 
         previous_button = self.content_frame.add_button("Previous", callback=self.home_page)
@@ -77,7 +77,7 @@ class InstallerUI:
             for label_name in val.get_content():
                 if val.is_detected(label_name):
                     # Already installed — show and skip
-                    label_widget = self.content_frame.add_scroll_label(f"• {label_name} (detected ✅)")
+                    label_widget = self.content_frame.add_scroll_label(f"• {label_name} (detected)")
                     val.set_label(label_widget)
                 else:
                     # Needs install
@@ -99,7 +99,7 @@ class InstallerUI:
                 l.configure(text=f"• {name} (installing...)"))
                 val.install(label_name)
                 self.content_frame.get_frame().after(0, lambda l=label_widget, name=label_name:
-                l.configure(text=f"• {name} (installed ✅)"))
+                l.configure(text=f"• {name} (installed)"))
 
                 if isinstance(val, CMakeBuilder):
                     self._start_dependents_after_cmake()
@@ -122,7 +122,7 @@ class InstallerUI:
                         l.configure(text=f"• {name} (installing...)"))
                         dependent.install(label_name)
                         self.content_frame.get_frame().after(0, lambda l=label_widget, name=label_name:
-                        l.configure(text=f"• {name} (installed ✅)"))
+                        l.configure(text=f"• {name} (installed)"))
 
         threading.Thread(target=dependent_worker, daemon=True).start()
 
