@@ -4,7 +4,7 @@
 set(PROJECT_SOURCE "${CMAKE_SOURCE_DIR}")
 
 # Output folder for binaries
-set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderEngine" CACHE PATH "Base output directory for all build artifacts")
+set(OUTPUT_BASE "${CMAKE_BINARY_DIR}/FoxRenderPlayground" CACHE PATH "Base output directory for all build artifacts")
 
 # Shader paths
 set(SHADER_INPUT_PATH "shaders" CACHE PATH "Input directory for raw shader source files")
@@ -81,8 +81,8 @@ add_executable(application WIN32 main.cpp ${SOURCE_FILES})
 
 # Rename executable based on build type
 set_target_properties(application PROPERTIES
-        OUTPUT_NAME_DEBUG "engine-debug"
-        OUTPUT_NAME_RELEASE "engine"
+        OUTPUT_NAME_DEBUG "playground-debug"
+        OUTPUT_NAME_RELEASE "playground"
 )
 
 # Labour Stuff hehehe
