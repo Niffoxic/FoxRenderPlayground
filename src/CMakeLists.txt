@@ -33,7 +33,6 @@ set(CMAKE_ARCHIVE_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_DEBUG "${OUTPUT_BASE}/libs/Debug")
 set(CMAKE_LIBRARY_OUTPUT_DIRECTORY_RELEASE "${OUTPUT_BASE}/libs/Release")
 
-
 find_package(Vulkan REQUIRED)
 
 # ========================= Link Imgui =========================
