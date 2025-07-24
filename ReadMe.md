@@ -30,8 +30,6 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 
 ![GUI Installer Preview](doc/installer-image.png)
 
-**BROKEN I WILL FIX IT LATER BUILD FROM CMAKE**
-
 > Note: If Vulkan is not detected after installation, ensure that the %VULKAN_SDK% environment variable is set correctly in your system’s PATH. After setting it, restart your system.
 Still facing issues? Feel free to reach out at: niffoisme@gmail.com
 ```bash
@@ -48,7 +46,7 @@ cd FoxRenderEngine
 mkdir build
 cd build
 cmake .. -G "Visual Studio 17 2022" -A x64 -DCMAKE_BUILD_TYPE=Debug
-cmake --build . --config Debug
+cmake --build . --config Debug --target CompileShaders
 ```
 
 Executables should be inside build/FoxRenderEngine/

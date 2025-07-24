@@ -90,7 +90,12 @@ class CMakeBuilder(InstallerTask):
 
             # Step 1: Configure
             self._log(f"Configuring CMake with build type: {build_type}")
-            cmake_config_cmd = ["cmake", "..", f"-DCMAKE_BUILD_TYPE={build_type}"]
+            cmake_config_cmd = [
+                "cmake",
+                "..",
+                "-G", "Visual Studio 17 2022",
+                f"-DCMAKE_BUILD_TYPE={build_type}"
+            ]
             self._log(f"Running: {' '.join(cmake_config_cmd)}")
 
             result = subprocess.run(cmake_config_cmd, cwd=build_dir, capture_output=True, text=True)
@@ -99,8 +104,12 @@ class CMakeBuilder(InstallerTask):
                 return
             self._log("CMake configured successfully.")
 
-            # Step 2: Build
-            cmake_build_cmd = ["cmake", "--build", ".", "--config", build_type]
+            # Step 2: Build shaders
+            cmake_build_cmd = [
+                "cmake",
+                "--build", ".",
+                "--config", build_type,
+            ]
             self._log(f"Running: {' '.join(cmake_build_cmd)}")
 
             result = subprocess.run(cmake_build_cmd, cwd=build_dir, capture_output=True, text=True)
@@ -108,7 +117,7 @@ class CMakeBuilder(InstallerTask):
                 self._log("CMake build failed:\n" + result.stderr)
                 return
 
-            self._log("Project built successfully.")
+            self._log("Shader compilation target built successfully.")
 
         except Exception as e:
             self._log(f"Exception during build: {e}")
