@@ -36,7 +36,7 @@ int FoxPlayground::Execute()
 
 #if defined(DEBUG) || defined(_DEBUG)
         KeyboardSingleton::Get().DebugKeysPressed();
-        MouseSingleton::Get().DebugKeysPressed();
+        // MouseSingleton::Get().DebugKeysPressed();
 
         const float elapsed = m_timer.GetElapsedTime();
         m_pWindowsManager->AddOnWindowsTitle(ToFString(elapsed));

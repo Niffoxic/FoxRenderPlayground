@@ -44,17 +44,26 @@ typedef struct TEST_VERTEX_DESC
 
 } VERTEX_DESC;
 
-_fox_Return_safe
-static std::vector<VERTEX_DESC> GenerateColorfulStarVertices(
-    const uint32_t numPoints    = 5,
-    const float    outerRadius  = 1.0f,
-    const float    innerRadius  = 0.5f)
+
+static void GenerateColorfulStarVertices(
+    _fox_Out_ std::vector<VERTEX_DESC>& vertices,
+    _fox_Out_ std::vector<uint16_t>&     indices,
+    _fox_In_  const uint32_t            numPoints    = 5,
+    _fox_In_  const float               outerRadius  = 1.0f,
+    _fox_In_  const float               innerRadius  = 0.5f)
 {
-    std::vector<VERTEX_DESC> vertices;
+    vertices.clear();
+    indices.clear();
 
     constexpr float PI = 3.14159265359f;
     constexpr float TWO_PI = 2.0f * PI;
     const float angleStep = TWO_PI / static_cast<float>(numPoints * 2);
+
+    const glm::vec2 center = glm::vec2(0.0f);
+    const glm::vec3 centerColor = glm::vec3(1.0f);
+
+    vertices.push_back({ center, centerColor });
+    const uint8_t centerIndex = 0;
 
     for (uint32_t i = 0; i < numPoints * 2; ++i)
     {
@@ -69,9 +78,14 @@ static std::vector<VERTEX_DESC> GenerateColorfulStarVertices(
         );
 
         vertices.push_back({ pos, color });
-    }
 
-    return vertices;
+        uint8_t i1 = static_cast<uint16_t>(i + 1);
+        uint8_t i2 = static_cast<uint16_t>((i + 1) % (numPoints * 2) + 1);
+
+        indices.push_back(centerIndex);
+        indices.push_back(i1);
+        indices.push_back(i2);
+    }
 }
 
 namespace Fox
@@ -135,6 +149,7 @@ private:
     void CreateFramebuffers();
     void CreateCommandPool();
     void CreateVertexBuffer();
+    void CreateIndexBuffer();
     void CreateCommandBuffers();
     void CreateSyncObjects();
 
@@ -175,14 +190,20 @@ private:
     VkCommandPool    m_vkCommandPool       { VK_NULL_HANDLE };
     VkBuffer         m_vkVertexBuffer      { VK_NULL_HANDLE };
     VkDeviceMemory   m_vkVertexBufferMemory{ VK_NULL_HANDLE };
+    VkBuffer         m_vkIndexBuffer       { VK_NULL_HANDLE };
+    VkDeviceMemory   m_vkIndexBufferMemory { VK_NULL_HANDLE };
 
     std::vector<VkCommandBuffer>  m_vkCommandBuffer;
     std::vector<VkSemaphore>      m_threadImageAvailableSemaphore;
     std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore;
     std::vector<VkFence>          m_threadInFlightFences;
 
-    uint32_t m_vertexCounts        {   0   };
-    uint32_t m_nCurrentFrame       {   0   };
+    std::vector<TEST_VERTEX_DESC> m_pdescVertexData{};
+    std::vector<uint16_t>         m_pnIndexData{};
+
+    uint32_t m_nVertexCounts        {   0   };
+    uint32_t m_nIndexCounts         {   0   };
+    uint32_t m_nCurrentFrame        {   0   };
     bool     m_bWindowResizeHandled{ false };
 };
 
