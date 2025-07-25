@@ -618,43 +618,39 @@ void RenderManager::CreateCommandPool()
 
 void RenderManager::CreateVertexBuffer()
 {
-    LOG_WARNING("Attempting to create vertex buffer");
+    LOG_WARNING("Attempting to create main vertex buffer");
     const std::vector<VERTEX_DESC> vertices = GenerateColorfulStarVertices(15);
     m_vertexCounts = static_cast<uint32_t>(vertices.size());
+    const VkDeviceSize bufferSize = sizeof(vertices[0]) * m_vertexCounts;
 
-    VkBufferCreateInfo info{};
-    info.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    info.usage       = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
-    info.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
-    info.size        = sizeof(vertices[0]) * vertices.size();
+    VkBuffer stagingBuffer{};
+    VkDeviceMemory stagingBufferMemory{};
 
-    if (vkCreateBuffer(m_vkDevice, &info, nullptr, &m_vkVertexBuffer) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed creating vertex buffer");
-
-    VkMemoryRequirements memReqs;
-    vkGetBufferMemoryRequirements(m_vkDevice, m_vkVertexBuffer, &memReqs);
-
-    VkMemoryAllocateInfo allocInfo{};
-    allocInfo.sType          = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.allocationSize = memReqs.size;
-    allocInfo.memoryTypeIndex = Fox::FindMemoryType
-    (
-        m_vkPhysicalDevice,
-        memReqs.memoryTypeBits,
-        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT
-    );
-
-    if (vkAllocateMemory(m_vkDevice, &allocInfo, nullptr, &m_vkVertexBufferMemory) != VK_SUCCESS)
-    {
-        THROW_EXCEPTION_MSG("Failed allocating vertex buffer memory");
-    }
-
-    vkBindBufferMemory(m_vkDevice, m_vkVertexBuffer, m_vkVertexBufferMemory, 0);
+    CreateBuffer(
+         bufferSize,
+         VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+         VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+         stagingBuffer,
+         stagingBufferMemory
+     );
 
     void* data;
-    vkMapMemory(m_vkDevice, m_vkVertexBufferMemory, 0, info.size, 0, &data);
-    memcpy(data, &vertices[0], static_cast<size_t>(info.size));
-    vkUnmapMemory(m_vkDevice, m_vkVertexBufferMemory);
+    vkMapMemory(m_vkDevice, stagingBufferMemory, 0, bufferSize, 0, &data);
+    memcpy(data, &vertices[0], bufferSize);
+    vkUnmapMemory(m_vkDevice, stagingBufferMemory);
+
+    CreateBuffer(
+        bufferSize,
+        VK_BUFFER_USAGE_TRANSFER_DST_BIT | VK_BUFFER_USAGE_VERTEX_BUFFER_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        m_vkVertexBuffer,
+        m_vkVertexBufferMemory
+    );
+
+    CopyBufferData(stagingBuffer, m_vkVertexBuffer, bufferSize);
+
+    vkDestroyBuffer(m_vkDevice, stagingBuffer, nullptr);
+    vkFreeMemory(m_vkDevice, stagingBufferMemory, nullptr);
 
     LOG_SUCCESS("Vertex Buffer Created");
 }
@@ -729,13 +725,88 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
         THROW_EXCEPTION_MSG("Failed recording command buffer");
 }
 
+void RenderManager::CreateBuffer(
+        const VkDeviceSize          size,
+        const VkBufferUsageFlags    usage,
+        const VkMemoryPropertyFlags properties,
+        VkBuffer&                   buffer,
+        VkDeviceMemory              &bufferMemory
+    ) const
+{
+    LOG_WARNING("[Helper] Attempting to creating buffer");
+    VkBufferCreateInfo bufferInfo{};
+    bufferInfo.sType       = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.size        = size;
+    bufferInfo.usage       = usage;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateBuffer(m_vkDevice, &bufferInfo, nullptr, &buffer) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed creating vertex buffer");
+
+    VkMemoryRequirements memRequirements;
+    vkGetBufferMemoryRequirements(m_vkDevice, buffer, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType           = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize  = memRequirements.size;
+    allocInfo.memoryTypeIndex = Fox::FindMemoryType(m_vkPhysicalDevice, memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(m_vkDevice, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed allocating vertex buffer memory");
+
+    vkBindBufferMemory(m_vkDevice, buffer, bufferMemory, 0);
+
+    LOG_SUCCESS("[Helper] Created vertex buffer");
+}
+
+void RenderManager::CopyBufferData(VkBuffer src, VkBuffer dst, VkDeviceSize size) const
+{
+    LOG_WARNING("Attempting to copy buffer data");
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool        = m_vkCommandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    VkBufferCopy copyRegion{};
+    copyRegion.srcOffset = 0;
+    copyRegion.dstOffset = 0;
+    copyRegion.size      = size;
+    vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
+
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &commandBuffer;
+
+    if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed submitting for copy in command buffer");
+
+    vkQueueWaitIdle(m_vkGraphicsQueue);
+
+    vkFreeCommandBuffers(m_vkDevice, m_vkCommandPool, 1, &commandBuffer);
+
+    LOG_SUCCESS("Buffer data has been copied!");
+}
+
 void RenderManager::CreateSyncObjects()
 {
     LOG_WARNING("Creating Thread (GPU Execution) locks");
 
-    m_threadImageAvailableSemaphore .resize(Fox::MAX_FRAMES_IN_FLIGHT);
-    m_threadInFlightFences          .resize(Fox::MAX_FRAMES_IN_FLIGHT);
-    m_threadRenderFinishedSemaphore .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_threadImageAvailableSemaphore.resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_threadInFlightFences         .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_threadRenderFinishedSemaphore.resize(Fox::MAX_FRAMES_IN_FLIGHT);
 
     VkSemaphoreCreateInfo semaphoreInfo{};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
@@ -764,10 +835,10 @@ void RenderManager::CreateSyncObjects()
 
 void RenderManager::ReleaseSwapChain() const
 {
-    for (auto m_vkSwapChainFramebuffer : m_vkSwapChainFramebuffers)
+    for (const auto m_vkSwapChainFramebuffer : m_vkSwapChainFramebuffers)
         vkDestroyFramebuffer(m_vkDevice, m_vkSwapChainFramebuffer, nullptr);
 
-    for (auto m_vkSwapChainImageView : m_vkSwapChainImageViews)
+    for (const auto m_vkSwapChainImageView : m_vkSwapChainImageViews)
         vkDestroyImageView(m_vkDevice, m_vkSwapChainImageView, nullptr);
 
     vkDestroySwapchainKHR(m_vkDevice, m_vkSwapChain, nullptr);

@@ -98,8 +98,24 @@ public:
 
     void RecordCommandBuffer(
         _fox_In_ VkCommandBuffer commandBuffer,
-        _fox_In_ uint32_t        imageIndex) const
+        _fox_In_ uint32_t        imageIndex
+    ) const
     _fox_Pre_satisfies_(commandBuffer != VK_NULL_HANDLE);
+
+    //~ Helper
+    void CreateBuffer(
+        _fox_In_  VkDeviceSize          size,
+        _fox_In_  VkBufferUsageFlags    usage,
+        _fox_In_  VkMemoryPropertyFlags properties,
+        _fox_Out_ VkBuffer&             buffer,
+        _fox_Out_ VkDeviceMemory&       bufferMemory
+    ) const;
+
+    void CopyBufferData(
+        _fox_In_ VkBuffer     src,
+        _fox_In_ VkBuffer     dst,
+        _fox_In_ VkDeviceSize size
+    ) const;
 
 private:
     //~ Initialize Vulkan
