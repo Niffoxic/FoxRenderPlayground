@@ -1024,11 +1024,7 @@ void RenderManager::RecreateSwapChain()
 void RenderManager::UpdateUniformBuffer(const uint32_t imageIndex) const
 {
     VERTEX_UNIFORM_DATA_DESC desc{};
-    desc.Transformation = glm::rotate(
-        glm::mat4(1.0f),
-        m_nElapsedTime * glm::radians(90.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
+    TestAnimation(m_nElapsedTime, desc.Transformation);
 
     desc.View = glm::lookAt(
         glm::vec3(2.0f, 2.0f, 2.0f),
@@ -1039,10 +1035,26 @@ void RenderManager::UpdateUniformBuffer(const uint32_t imageIndex) const
     desc.Projection = glm::perspective(
         glm::radians(45.0f),
         m_descSwapChainSupportDetails.Extent.width
-        / static_cast<float> (m_descSwapChainSupportDetails.Extent.height),
+        / static_cast<float>(m_descSwapChainSupportDetails.Extent.height),
         0.1f, 10.0f
     );
     desc.Projection[1][1] *= -1.0f;
 
+    desc.TotalElapsedTime = m_nElapsedTime;
+
     memcpy(m_ppUniformBuffersMapped[imageIndex], &desc, sizeof(desc));
+}
+
+void RenderManager::TestAnimation(const float deltaTime, glm::mat4& transform) const
+{
+    // Spin + pulse scale + orbit = good vibes
+    const float angle     = deltaTime * glm::radians(45.0f);
+    const float pulse     = 0.2f * sin(deltaTime * 2.0f);
+    const float baseScale = 1.0f + pulse;
+
+    const glm::mat4 rotation = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
+    const glm::mat4 scaling  = glm::scale(glm::mat4(1.0f), glm::vec3(baseScale));
+    const glm::mat4 orbit    = glm::translate(glm::mat4(1.0f), glm::vec3(sin(angle) * 0.5f, cos(angle) * 0.5f, 0.0f));
+
+    transform = orbit * rotation * scaling;
 }

@@ -49,7 +49,8 @@ typedef struct VERTEX_CONSTANT_DATA
     glm::mat4 Transformation;
     glm::mat4 View;
     glm::mat4 Projection;
-
+    float TotalElapsedTime;
+    float padding[3];
 } VERTEX_UNIFORM_DATA_DESC;
 
 static void GenerateColorfulStarVertices(
@@ -168,6 +169,7 @@ private:
     void ReleaseSwapChain () const;
     void RecreateSwapChain();
     void UpdateUniformBuffer(uint32_t imageIndex) const;
+    void TestAnimation(float deltaTime, glm::mat4& transform) const;
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
