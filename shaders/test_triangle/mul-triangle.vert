@@ -16,13 +16,22 @@ layout(location = 0) out vec3 outColor;
 
 void main()
 {
-    // --- Animate position with time-based sine wave ---
-    float wave = sin(tcb.timeElapsed * 2.0 + inPosition.x * 10.0) * 0.05;
+    float r = length(inPosition);
+    float angle = atan(inPosition.y, inPosition.x);
 
-    // Apply the wave to Y position for a ripple-like bounce
-    vec3 animatedPos = vec3(inPosition.x, inPosition.y + wave, 0.0);
+    float pulse = sin(tcb.timeElapsed * 6.0 + r * 20.0 + angle * 10.0) * 0.25;
+    float dynamicRadius = r + pulse;
 
-    // Standard MVP transform
-    gl_Position = tcb.projection * tcb.view * tcb.transformation * vec4(animatedPos, 1.0);
+    float spin = tcb.timeElapsed * 2.0;
+    float dynamicAngle = angle + sin(tcb.timeElapsed + r * 15.0) * 1.0 + spin;
+
+    vec2 vortexPos = vec2(cos(dynamicAngle), sin(dynamicAngle)) * dynamicRadius;
+
+    float breathingScale = 1.0 + 0.15 * sin(tcb.timeElapsed * 2.0);
+    vortexPos *= breathingScale;
+
+    vec3 finalPos = vec3(vortexPos, 0.0);
+    gl_Position = tcb.projection * tcb.view * tcb.transformation * vec4(finalPos, 1.0);
+
     outColor = inColor;
 }
