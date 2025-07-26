@@ -134,7 +134,6 @@ void RenderManager::OnRelease()
     vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
     vkDestroyDescriptorSetLayout(m_vkDevice, m_vkDescriptorSetLayout, nullptr);
     vkDestroyDescriptorPool(m_vkDevice, m_vkDescriptorPool, nullptr);
-    vkDestroyDescriptorSetLayout(m_vkDevice, m_vkDescriptorSetLayout, nullptr);
     vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
 
     //~ Clean Swap chain

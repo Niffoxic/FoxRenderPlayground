@@ -1,7 +1,7 @@
 # Fox Render Playground
 
 > Current Output: Nothing fancy yet but it'll be fun to see how far it evolves later!
-![Fox Render Playground Demo](doc/output/output-1.gif)
+![Fox Render Playground Demo](doc/output/output-2.gif)
 
 This is a Windows-specific graphics project built using **Vulkan** and the **Win32 API**, designed to test and experiment with:
 
