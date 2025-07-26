@@ -12,7 +12,7 @@
 #include <glm/glm.hpp>
 #include <cmath>
 
-typedef struct TEST_VERTEX_DESC
+typedef struct VERTEX_DESC
 {
     glm::vec2 Position;
     glm::vec3 Color;
@@ -21,7 +21,7 @@ typedef struct TEST_VERTEX_DESC
     {
         VkVertexInputBindingDescription desc{};
         desc.binding = 0;
-        desc.stride = sizeof(TEST_VERTEX_DESC);
+        desc.stride = sizeof(VERTEX_DESC);
         desc.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
         return desc;
     }
@@ -32,22 +32,29 @@ typedef struct TEST_VERTEX_DESC
         desc[0].binding = 0;
         desc[0].location = 0;
         desc[0].format = VK_FORMAT_R32G32_SFLOAT;
-        desc[0].offset = offsetof(TEST_VERTEX_DESC, Position);
+        desc[0].offset = offsetof(VERTEX_DESC, Position);
 
         desc[1].binding = 0;
         desc[1].location = 1;
         desc[1].format = VK_FORMAT_R32G32B32_SFLOAT;
-        desc[1].offset = offsetof(TEST_VERTEX_DESC, Color);
+        desc[1].offset = offsetof(VERTEX_DESC, Color);
 
         return desc;
     }
 
 } VERTEX_DESC;
 
+typedef struct VERTEX_CONSTANT_DATA
+{
+    glm::mat4 Transformation;
+    glm::mat4 View;
+    glm::mat4 Projection;
+
+} VERTEX_UNIFORM_DATA_DESC;
 
 static void GenerateColorfulStarVertices(
     _fox_Out_ std::vector<VERTEX_DESC>& vertices,
-    _fox_Out_ std::vector<uint16_t>&     indices,
+    _fox_Out_ std::vector<uint16_t>&    indices,
     _fox_In_  const uint32_t            numPoints    = 5,
     _fox_In_  const float               outerRadius  = 1.0f,
     _fox_In_  const float               innerRadius  = 0.5f)
@@ -59,19 +66,19 @@ static void GenerateColorfulStarVertices(
     constexpr float TWO_PI = 2.0f * PI;
     const float angleStep = TWO_PI / static_cast<float>(numPoints * 2);
 
-    const glm::vec2 center = glm::vec2(0.0f);
-    const glm::vec3 centerColor = glm::vec3(1.0f);
+    constexpr auto center = glm::vec2(0.0f);
+    constexpr auto centerColor = glm::vec3(1.0f);
 
     vertices.push_back({ center, centerColor });
-    const uint8_t centerIndex = 0;
 
     for (uint32_t i = 0; i < numPoints * 2; ++i)
     {
-        const float angle = i * angleStep;
+        constexpr uint8_t centerIndex = 0;
+        const float angle = static_cast<float>(i) * angleStep;
         const float radius = (i % 2 == 0) ? outerRadius : innerRadius;
-        const glm::vec2 pos = glm::vec2(std::cos(angle), std::sin(angle)) * radius;
+        const auto pos = glm::vec2(std::cos(angle), std::sin(angle)) * radius;
 
-        glm::vec3 color = glm::vec3(
+        const auto color = glm::vec3(
             0.5f + 0.5f * std::cos(angle),
             0.5f + 0.5f * std::cos(angle + 2.0f),
             0.5f + 0.5f * std::cos(angle + 4.0f)
@@ -79,8 +86,8 @@ static void GenerateColorfulStarVertices(
 
         vertices.push_back({ pos, color });
 
-        uint8_t i1 = static_cast<uint16_t>(i + 1);
-        uint8_t i2 = static_cast<uint16_t>((i + 1) % (numPoints * 2) + 1);
+        const uint8_t i1 = static_cast<uint16_t>(i + 1);
+        const uint8_t i2 = static_cast<uint16_t>((i + 1) % (numPoints * 2) + 1);
 
         indices.push_back(centerIndex);
         indices.push_back(i1);
@@ -133,29 +140,34 @@ public:
 
 private:
     //~ Initialize Vulkan
-    bool InitVulkan();
-    void CreateInstance();
-    void CreateSurface();
+    bool InitVulkan          ();
+    void CreateInstance      ();
+    void CreateSurface       ();
     void SelectPhysicalDevice();
-    void CreateLogicalDevice();
+    void CreateLogicalDevice ();
 
     //~ Create Swap chain
-    void CreateSwapChain();
+    void CreateSwapChain ();
     void CreateImageViews();
 
     //~ Test Rendering TODO: Replace it with RenderQueue
-    void CreateRenderPass();
-    void CreateRenderPipeline();
-    void CreateFramebuffers();
-    void CreateCommandPool();
-    void CreateVertexBuffer();
-    void CreateIndexBuffer();
-    void CreateCommandBuffers();
-    void CreateSyncObjects();
+    void CreateRenderPass         ();
+    void CreateDescriptorSetLayout();
+    void CreateRenderPipeline     ();
+    void CreateFramebuffers       ();
+    void CreateCommandPool        ();
+    void CreateVertexBuffer       ();
+    void CreateIndexBuffer        ();
+    void CreateUniformBuffer      ();
+    void CreateDescriptorPool     ();
+    void CreateDescriptorSets     ();
+    void CreateCommandBuffers     ();
+    void CreateSyncObjects        ();
 
     //~ Test Events
-    void ReleaseSwapChain() const;
+    void ReleaseSwapChain () const;
     void RecreateSwapChain();
+    void UpdateUniformBuffer(uint32_t imageIndex) const;
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -182,29 +194,38 @@ private:
     std::vector<VkFramebuffer> m_vkSwapChainFramebuffers{};
 
     // TODO: Remove it later its only for test
-    VkRenderPass     m_vkRenderPass        { VK_NULL_HANDLE };
-    VkPipelineLayout m_vkPipelineLayout    { VK_NULL_HANDLE };
-    VkPipeline       m_vkGraphicsPipeline  { VK_NULL_HANDLE };
-    VkShaderModule   m_shaderTestCubeVert  { VK_NULL_HANDLE };
-    VkShaderModule   m_shaderTestCubeFrag  { VK_NULL_HANDLE };
-    VkCommandPool    m_vkCommandPool       { VK_NULL_HANDLE };
-    VkBuffer         m_vkVertexBuffer      { VK_NULL_HANDLE };
-    VkDeviceMemory   m_vkVertexBufferMemory{ VK_NULL_HANDLE };
-    VkBuffer         m_vkIndexBuffer       { VK_NULL_HANDLE };
-    VkDeviceMemory   m_vkIndexBufferMemory { VK_NULL_HANDLE };
+    VkRenderPass          m_vkRenderPass         { VK_NULL_HANDLE };
+    VkDescriptorSetLayout m_vkDescriptorSetLayout{ VK_NULL_HANDLE };
+    VkDescriptorPool      m_vkDescriptorPool     { VK_NULL_HANDLE };
+    VkPipelineLayout      m_vkPipelineLayout     { VK_NULL_HANDLE };
+    VkPipeline            m_vkGraphicsPipeline   { VK_NULL_HANDLE };
+    VkShaderModule        m_shaderTestCubeVert   { VK_NULL_HANDLE };
+    VkShaderModule        m_shaderTestCubeFrag   { VK_NULL_HANDLE };
+    VkCommandPool         m_vkCommandPool        { VK_NULL_HANDLE };
+    VkBuffer              m_vkVertexBuffer       { VK_NULL_HANDLE };
+    VkDeviceMemory        m_vkVertexBufferMemory { VK_NULL_HANDLE };
+    VkBuffer              m_vkIndexBuffer        { VK_NULL_HANDLE };
+    VkDeviceMemory        m_vkIndexBufferMemory  { VK_NULL_HANDLE };
 
     std::vector<VkCommandBuffer>  m_vkCommandBuffer;
     std::vector<VkSemaphore>      m_threadImageAvailableSemaphore;
     std::vector<VkSemaphore>      m_threadRenderFinishedSemaphore;
     std::vector<VkFence>          m_threadInFlightFences;
 
-    std::vector<TEST_VERTEX_DESC> m_pdescVertexData{};
-    std::vector<uint16_t>         m_pnIndexData{};
+    std::vector<VERTEX_DESC>     m_pdescVertexData        {};
+    std::vector<uint16_t>        m_pnIndexData            {};
+    std::vector<VkBuffer>        m_pvkUniformBuffers      {};
+    std::vector<VkDeviceMemory>  m_pvkUniformBuffersMemory{};
+    std::vector<void*>           m_ppUniformBuffersMapped {};
+    std::vector<VkDescriptorSet> m_pvkDescSets            {};
 
     uint32_t m_nVertexCounts        {   0   };
     uint32_t m_nIndexCounts         {   0   };
     uint32_t m_nCurrentFrame        {   0   };
     bool     m_bWindowResizeHandled{ false };
+
+    //~ Cache
+    float m_nElapsedTime{ 0.0f };
 };
 
 #endif //RENDERMANAGER_H
