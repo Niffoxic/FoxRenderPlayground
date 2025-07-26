@@ -4,6 +4,8 @@
 
 #include "RenderManager.h"
 #include "Helper.h"
+#include "glm/ext/matrix_clip_space.hpp"
+#include "glm/ext/matrix_transform.hpp"
 
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
@@ -19,8 +21,9 @@ bool RenderManager::OnInit()
     return InitVulkan();
 }
 
-void RenderManager::OnUpdateStart(float deltaTime)
+void RenderManager::OnUpdateStart(const float deltaTime)
 {
+    m_nElapsedTime += deltaTime;
     vkDeviceWaitIdle(m_vkDevice);
 
     if (m_threadImageAvailableSemaphore.empty()
@@ -30,6 +33,7 @@ void RenderManager::OnUpdateStart(float deltaTime)
     if (m_nCurrentFrame >= Fox::MAX_FRAMES_IN_FLIGHT)
         THROW_EXCEPTION_FMT("Current Count Exceeded: {}/{}", m_nCurrentFrame, Fox::MAX_FRAMES_IN_FLIGHT);
 
+    UpdateUniformBuffer(m_nCurrentFrame);
     vkWaitForFences(m_vkDevice, 1, &m_threadInFlightFences[m_nCurrentFrame], VK_TRUE, UINT64_MAX);
 
     uint32_t imageIndex;
@@ -105,6 +109,13 @@ void RenderManager::OnRelease()
     vkDestroyBuffer(m_vkDevice, m_vkIndexBuffer, nullptr);
     vkFreeMemory(m_vkDevice, m_vkIndexBufferMemory, nullptr);
 
+    //~ Clean Uniform buffers
+    for (uint32_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        vkDestroyBuffer(m_vkDevice, m_pvkUniformBuffers[i], nullptr);
+        vkFreeMemory(m_vkDevice, m_pvkUniformBuffersMemory[i], nullptr);
+    }
+
     //~ Release thread locks
     for (size_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
     {
@@ -121,6 +132,9 @@ void RenderManager::OnRelease()
 
     vkDestroyPipeline(m_vkDevice, m_vkGraphicsPipeline, nullptr);
     vkDestroyPipelineLayout(m_vkDevice, m_vkPipelineLayout, nullptr);
+    vkDestroyDescriptorSetLayout(m_vkDevice, m_vkDescriptorSetLayout, nullptr);
+    vkDestroyDescriptorPool(m_vkDevice, m_vkDescriptorPool, nullptr);
+    vkDestroyDescriptorSetLayout(m_vkDevice, m_vkDescriptorSetLayout, nullptr);
     vkDestroyRenderPass(m_vkDevice, m_vkRenderPass, nullptr);
 
     //~ Clean Swap chain
@@ -171,11 +185,15 @@ bool RenderManager::InitVulkan()
 
     //~ TODO: Only For Test replace with Spatial structure
     CreateRenderPass();
+    CreateDescriptorSetLayout();
     CreateRenderPipeline();
     CreateFramebuffers();
     CreateCommandPool();
     CreateVertexBuffer();
     CreateIndexBuffer();
+    CreateUniformBuffer();
+    CreateDescriptorPool();
+    CreateDescriptorSets();
     CreateCommandBuffers();
     CreateSyncObjects();
     return true;
@@ -444,6 +462,27 @@ void RenderManager::CreateRenderPass()
     LOG_INFO("Created render pass!");
 }
 
+void RenderManager::CreateDescriptorSetLayout()
+{
+    LOG_WARNING("Attempting to create descriptor set layout...");
+    VkDescriptorSetLayoutBinding desc{};
+    desc.binding = 0;
+    desc.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    desc.descriptorCount = 1;
+    desc.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+    desc.pImmutableSamplers = nullptr;
+
+    VkDescriptorSetLayoutCreateInfo layoutInfo{};
+    layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
+    layoutInfo.bindingCount = 1;
+    layoutInfo.pBindings = &desc;
+
+    if (vkCreateDescriptorSetLayout(m_vkDevice, &layoutInfo, nullptr, &m_vkDescriptorSetLayout) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create descriptor set layout!");
+
+    LOG_SUCCESS("Created descriptor set layout!");
+}
+
 void RenderManager::CreateRenderPipeline()
 {
     LOG_WARNING("Attempting to Create Render Pipeline");
@@ -502,7 +541,7 @@ void RenderManager::CreateRenderPipeline()
     rasterizationState.polygonMode              = VK_POLYGON_MODE_FILL;
     rasterizationState.lineWidth                = 1.0f;
     rasterizationState.cullMode                 = VK_CULL_MODE_BACK_BIT;
-    rasterizationState.frontFace                = VK_FRONT_FACE_CLOCKWISE;
+    rasterizationState.frontFace                = VK_FRONT_FACE_COUNTER_CLOCKWISE;
     rasterizationState.depthBiasEnable          = VK_FALSE;
 
     //~ MSAA
@@ -546,7 +585,8 @@ void RenderManager::CreateRenderPipeline()
     //~ Pipeline
     VkPipelineLayoutCreateInfo pipelineLayoutInfo{};
     pipelineLayoutInfo.sType                  = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
-    pipelineLayoutInfo.setLayoutCount         = 0;
+    pipelineLayoutInfo.setLayoutCount         = 1;
+    pipelineLayoutInfo.pSetLayouts            = &m_vkDescriptorSetLayout;
     pipelineLayoutInfo.pushConstantRangeCount = 0;
 
     if (vkCreatePipelineLayout(m_vkDevice, &pipelineLayoutInfo, nullptr, &m_vkPipelineLayout) != VK_SUCCESS)
@@ -694,6 +734,88 @@ void RenderManager::CreateIndexBuffer()
     vkFreeMemory(m_vkDevice, stagingBufferMemory, nullptr);
 }
 
+void RenderManager::CreateUniformBuffer()
+{
+    LOG_INFO("Attempting to create uniform buffer");
+    m_pvkUniformBuffers      .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_ppUniformBuffersMapped .resize(Fox::MAX_FRAMES_IN_FLIGHT);
+    m_pvkUniformBuffersMemory.resize(Fox::MAX_FRAMES_IN_FLIGHT);
+
+    for (uint32_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        constexpr VkDeviceSize bufferSize = sizeof(VERTEX_UNIFORM_DATA_DESC);
+        CreateBuffer(
+            bufferSize,
+            VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
+            VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+            m_pvkUniformBuffers[i],
+            m_pvkUniformBuffersMemory[i]
+        );
+
+        vkMapMemory(m_vkDevice, m_pvkUniformBuffersMemory[i], 0, bufferSize, 0, &m_ppUniformBuffersMapped[i]);
+    }
+    LOG_SUCCESS("Uniform Buffer Created");
+}
+
+void RenderManager::CreateDescriptorPool()
+{
+    LOG_WARNING("Attempting to create descriptor pool");
+    VkDescriptorPoolSize descriptorPoolSize{};
+    descriptorPoolSize.type            = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+    descriptorPoolSize.descriptorCount = Fox::MAX_FRAMES_IN_FLIGHT;
+
+    VkDescriptorPoolCreateInfo poolInfo{};
+    poolInfo.sType         = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    poolInfo.poolSizeCount = 1;
+    poolInfo.pPoolSizes    = &descriptorPoolSize;
+    poolInfo.maxSets       = Fox::MAX_FRAMES_IN_FLIGHT;
+
+    if (vkCreateDescriptorPool(m_vkDevice, &poolInfo, nullptr, &m_vkDescriptorPool) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create descriptor pool");
+
+    LOG_SUCCESS("Descriptor pool created");
+}
+
+void RenderManager::CreateDescriptorSets()
+{
+    LOG_WARNING("Attempting to create descriptor sets");
+    std::vector<VkDescriptorSetLayout> layouts(Fox::MAX_FRAMES_IN_FLIGHT, m_vkDescriptorSetLayout);
+
+    VkDescriptorSetAllocateInfo descriptorSetAllocateInfo{};
+    descriptorSetAllocateInfo.sType              = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO;
+    descriptorSetAllocateInfo.descriptorPool     = m_vkDescriptorPool;
+    descriptorSetAllocateInfo.descriptorSetCount = static_cast<uint32_t>(Fox::MAX_FRAMES_IN_FLIGHT);
+    descriptorSetAllocateInfo.pSetLayouts        = layouts.data();
+
+    m_pvkDescSets.resize(Fox::MAX_FRAMES_IN_FLIGHT);
+
+    if (vkAllocateDescriptorSets(m_vkDevice, &descriptorSetAllocateInfo, m_pvkDescSets.data()) != VK_SUCCESS)
+        THROW_EXCEPTION_MSG("Failed to create Descriptor Sets");
+
+    LOG_SUCCESS("Descriptor Sets created");
+
+    for (uint32_t i = 0; i < Fox::MAX_FRAMES_IN_FLIGHT; i++)
+    {
+        VkDescriptorBufferInfo bufferInfo{};
+        bufferInfo.buffer = m_pvkUniformBuffers[i];
+        bufferInfo.offset = 0;
+        bufferInfo.range  = sizeof(VERTEX_UNIFORM_DATA_DESC);
+
+        VkWriteDescriptorSet descriptorWrite{};
+        descriptorWrite.sType            = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+        descriptorWrite.dstSet           = m_pvkDescSets[i];
+        descriptorWrite.dstBinding       = 0;
+        descriptorWrite.dstArrayElement  = 0;
+        descriptorWrite.descriptorType   = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+        descriptorWrite.descriptorCount  = 1;
+        descriptorWrite.pBufferInfo      = &bufferInfo;
+        descriptorWrite.pImageInfo       = nullptr;
+        descriptorWrite.pTexelBufferView = nullptr;
+
+        vkUpdateDescriptorSets(m_vkDevice, 1, &descriptorWrite, 0, nullptr);
+    }
+}
+
 void RenderManager::CreateCommandBuffers()
 {
     m_vkCommandBuffer.resize(Fox::MAX_FRAMES_IN_FLIGHT);
@@ -727,7 +849,7 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     renderPassInfo.renderArea.offset    = { 0, 0 };
     renderPassInfo.renderArea.extent    = m_descSwapChainSupportDetails.Extent;
 
-    auto color = GenerateRandomColor();
+    const auto color = GenerateRandomColor();
     VkClearValue clearColor{};
     clearColor.color                = { color[0], color[1], color[2], color[3] };
     renderPassInfo.clearValueCount  = 1;
@@ -752,10 +874,14 @@ void RenderManager::RecordCommandBuffer(VkCommandBuffer commandBuffer, uint32_t 
     vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
     //~ Set Vertex buffer
-    VkBuffer vertexBuffers[] = { m_vkVertexBuffer };
-    VkDeviceSize offsets[] = { 0 };
+    const VkBuffer vertexBuffers[] = { m_vkVertexBuffer };
+    constexpr VkDeviceSize offsets[] = { 0 };
     vkCmdBindVertexBuffers(commandBuffer, 0, 1, vertexBuffers, offsets);
     vkCmdBindIndexBuffer(commandBuffer, m_vkIndexBuffer, 0, VK_INDEX_TYPE_UINT16);
+
+    vkCmdBindDescriptorSets(commandBuffer,
+        VK_PIPELINE_BIND_POINT_GRAPHICS, m_vkPipelineLayout, 0, 1,
+        &m_pvkDescSets[m_nCurrentFrame], 0, nullptr);
 
     vkCmdDrawIndexed(commandBuffer, m_nIndexCounts, 1, 0, 0, 0);
 
@@ -893,4 +1019,30 @@ void RenderManager::RecreateSwapChain()
     CreateSwapChain();
     CreateImageViews();
     CreateFramebuffers();
+}
+
+void RenderManager::UpdateUniformBuffer(const uint32_t imageIndex) const
+{
+    VERTEX_UNIFORM_DATA_DESC desc{};
+    desc.Transformation = glm::rotate(
+        glm::mat4(1.0f),
+        m_nElapsedTime * glm::radians(90.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+
+    desc.View = glm::lookAt(
+        glm::vec3(2.0f, 2.0f, 2.0f),
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+
+    desc.Projection = glm::perspective(
+        glm::radians(45.0f),
+        m_descSwapChainSupportDetails.Extent.width
+        / static_cast<float> (m_descSwapChainSupportDetails.Extent.height),
+        0.1f, 10.0f
+    );
+    desc.Projection[1][1] *= -1.0f;
+
+    memcpy(m_ppUniformBuffersMapped[imageIndex], &desc, sizeof(desc));
 }
