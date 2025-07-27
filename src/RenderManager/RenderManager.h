@@ -190,6 +190,12 @@ private:
         _fox_In_ VkImageLayout oldLayout,
         _fox_In_ VkImageLayout newLayout
     ) const;
+    void CopyBufferToImage(
+        _fox_In_ VkBuffer buffer,
+        _fox_In_ VkImage image,
+        _fox_In_ uint32_t width,
+        _fox_In_ uint32_t height
+    ) const;
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
