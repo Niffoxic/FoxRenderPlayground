@@ -71,6 +71,15 @@ FetchContent_MakeAvailable(glm)
 
 # ========================= Linked GLM =========================
 
+# ========================= Linked stb =========================
+
+FetchContent_Declare(
+        stb
+        GIT_REPOSITORY https://github.com/nothings/stb
+        GIT_TAG master
+)
+FetchContent_MakeAvailable(stb)
+# ========================= Linked stb =========================
 
 # Main Stuff
 file(GLOB_RECURSE SOURCE_FILES CONFIGURE_DEPENDS
@@ -97,6 +106,7 @@ target_include_directories(
         ${CMAKE_CURRENT_SOURCE_DIR}/Utils # same reason I dont like utils then this then that....
         imgui_lib
         ${glm_SOURCE_DIR}
+        ${stb_SOURCE_DIR}
 )
 
 set(SHADER_COMPILER "${PROJECT_SOURCE}/setup/compile_shaders.py")

@@ -7,6 +7,9 @@
 #include "glm/ext/matrix_clip_space.hpp"
 #include "glm/ext/matrix_transform.hpp"
 
+#define STB_IMAGE_IMPLEMENTATION
+#include <stb_image.h>
+
 RenderManager::RenderManager(WindowsManager *winManager)
  : m_pWinManager(winManager)
 {}
@@ -188,6 +191,7 @@ bool RenderManager::InitVulkan()
     CreateRenderPipeline();
     CreateFramebuffers();
     CreateCommandPool();
+    CreateTextureImage();
     CreateVertexBuffer();
     CreateIndexBuffer();
     CreateUniformBuffer();
@@ -659,6 +663,54 @@ void RenderManager::CreateCommandPool()
     LOG_SUCCESS("Command pool Created");
 }
 
+void RenderManager::CreateTextureImage()
+{
+    LOG_WARNING("Attempting to create vulkan texture image buffer");
+    int textureWidth, textureHeight, textureChannels;
+
+    const stbi_uc* pixels = stbi_load(
+        "",
+        &textureWidth,
+        &textureHeight,
+        &textureChannels,
+        STBI_rgb_alpha
+    );
+
+    const VkDeviceSize imageSize = textureWidth * textureHeight * 4u;
+    if (not pixels) THROW_EXCEPTION_MSG("Failed creating texture image");
+    LOG_SUCCESS("Texture Image Created");
+
+    VkBuffer stagingBuffer;
+    VkDeviceMemory stagingBufferMemory;
+
+    CreateBuffer(
+        imageSize,
+        VK_BUFFER_USAGE_TRANSFER_SRC_BIT,
+        VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
+        stagingBuffer,
+        stagingBufferMemory
+    );
+
+    void* data;
+    vkMapMemory(m_vkDevice, stagingBufferMemory, 0, imageSize, 0, &data);
+    memcpy(data, pixels, imageSize);
+    vkUnmapMemory(m_vkDevice, stagingBufferMemory);
+
+    stbi_image_free(&pixels);
+
+    CreateImage(
+        textureWidth,
+        textureHeight,
+        VK_FORMAT_R8G8B8A8_SRGB,
+        VK_IMAGE_TILING_OPTIMAL,
+        VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
+        VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+        m_vkTextureImage,
+        m_vkTextureImageMemory
+    );
+    LOG_SUCCESS("Texture vulkan Image buffer created");
+}
+
 void RenderManager::CreateVertexBuffer()
 {
     LOG_WARNING("Attempting to create main vertex buffer");
@@ -924,44 +976,17 @@ void RenderManager::CreateBuffer(
     LOG_SUCCESS("[Helper] Created vertex buffer");
 }
 
-void RenderManager::CopyBufferData(VkBuffer src, VkBuffer dst, VkDeviceSize size) const
+void RenderManager::CopyBufferData(
+    const VkBuffer src,
+    const VkBuffer dst,
+    const VkDeviceSize size) const
 {
     LOG_WARNING("Attempting to copy buffer data");
-    VkCommandBufferAllocateInfo allocInfo{};
-    allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandPool        = m_vkCommandPool;
-    allocInfo.commandBufferCount = 1;
-
-    VkCommandBuffer commandBuffer;
-    vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &commandBuffer);
-
-    VkCommandBufferBeginInfo beginInfo{};
-    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
-    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
-
-    vkBeginCommandBuffer(commandBuffer, &beginInfo);
-
+    const VkCommandBuffer commandBuffer = BeginSetupCommands();
     VkBufferCopy copyRegion{};
-    copyRegion.srcOffset = 0;
-    copyRegion.dstOffset = 0;
-    copyRegion.size      = size;
+    copyRegion.size = size;
     vkCmdCopyBuffer(commandBuffer, src, dst, 1, &copyRegion);
-
-    vkEndCommandBuffer(commandBuffer);
-
-    VkSubmitInfo submitInfo{};
-    submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
-    submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers    = &commandBuffer;
-
-    if (vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
-        THROW_EXCEPTION_MSG("Failed submitting for copy in command buffer");
-
-    vkQueueWaitIdle(m_vkGraphicsQueue);
-
-    vkFreeCommandBuffers(m_vkDevice, m_vkCommandPool, 1, &commandBuffer);
-
+    EndSetupCommands(commandBuffer);
     LOG_SUCCESS("Buffer data has been copied!");
 }
 
@@ -1056,4 +1081,94 @@ void RenderManager::TestAnimation(const float deltaTime, glm::mat4& transform) c
     const glm::mat4 orbit    = glm::translate(glm::mat4(1.0f), glm::vec3(sin(angle) * 0.5f, cos(angle) * 0.5f, 0.0f));
 
     transform = orbit * rotation * scaling;
+}
+
+void RenderManager::CreateImage(
+    const uint32_t width,
+    const uint32_t height,
+    const VkFormat format,
+    const VkImageTiling tiling,
+    const VkImageUsageFlags usage,
+    VkMemoryPropertyFlags properties,
+    VkImage& image,
+    VkDeviceMemory& imageViewMemory
+)
+{
+    VkImageCreateInfo imageInfo{};
+    imageInfo.sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO;
+    imageInfo.imageType = VK_IMAGE_TYPE_2D;
+    imageInfo.extent.width = width;
+    imageInfo.extent.height = height;
+    imageInfo.extent.depth = 1;
+    imageInfo.mipLevels = 1;
+    imageInfo.arrayLayers = 1;
+    imageInfo.format = format;
+    imageInfo.tiling = tiling;
+    imageInfo.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    imageInfo.usage = usage;
+    imageInfo.samples = VK_SAMPLE_COUNT_1_BIT;
+    imageInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+
+    if (vkCreateImage(m_vkDevice, &imageInfo, nullptr, &image) != VK_SUCCESS) {
+        throw std::runtime_error("failed to create image!");
+    }
+
+    VkMemoryRequirements memRequirements;
+    vkGetImageMemoryRequirements(m_vkDevice, image, &memRequirements);
+
+    VkMemoryAllocateInfo allocInfo{};
+    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
+    allocInfo.allocationSize = memRequirements.size;
+    allocInfo.memoryTypeIndex = Fox::FindMemoryType(m_vkPhysicalDevice,memRequirements.memoryTypeBits, properties);
+
+    if (vkAllocateMemory(m_vkDevice, &allocInfo, nullptr, &imageViewMemory) != VK_SUCCESS) {
+        throw std::runtime_error("failed to allocate image memory!");
+    }
+
+    vkBindImageMemory(m_vkDevice, image, imageViewMemory, 0);
+}
+
+VkCommandBuffer RenderManager::BeginSetupCommands() const
+{
+    VkCommandBufferAllocateInfo allocInfo{};
+    allocInfo.sType              = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
+    allocInfo.level              = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
+    allocInfo.commandPool        = m_vkCommandPool;
+    allocInfo.commandBufferCount = 1;
+
+    VkCommandBuffer commandBuffer;
+    vkAllocateCommandBuffers(m_vkDevice, &allocInfo, &commandBuffer);
+
+    VkCommandBufferBeginInfo beginInfo{};
+    beginInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO;
+    beginInfo.flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT;
+
+    vkBeginCommandBuffer(commandBuffer, &beginInfo);
+
+    return commandBuffer;
+}
+
+void RenderManager::EndSetupCommands(const VkCommandBuffer commandBuffer) const
+{
+    vkEndCommandBuffer(commandBuffer);
+
+    VkSubmitInfo submitInfo{};
+    submitInfo.sType              = VK_STRUCTURE_TYPE_SUBMIT_INFO;
+    submitInfo.commandBufferCount = 1;
+    submitInfo.pCommandBuffers    = &commandBuffer;
+
+    vkQueueSubmit(m_vkGraphicsQueue, 1, &submitInfo, VK_NULL_HANDLE);
+    vkQueueWaitIdle(m_vkGraphicsQueue);
+
+    vkFreeCommandBuffers(m_vkDevice, m_vkCommandPool, 1, &commandBuffer);
+}
+
+void RenderManager::TransitionImageLayout(
+    VkImage image,
+    VkFormat format,
+    VkImageLayout oldLayout,
+    VkImageLayout newLayout) const
+{
+    const VkCommandBuffer commandBuffer = BeginSetupCommands();
+    EndSetupCommands(commandBuffer);
 }

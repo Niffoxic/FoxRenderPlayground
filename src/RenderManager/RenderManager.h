@@ -157,6 +157,7 @@ private:
     void CreateRenderPipeline     ();
     void CreateFramebuffers       ();
     void CreateCommandPool        ();
+    void CreateTextureImage       ();
     void CreateVertexBuffer       ();
     void CreateIndexBuffer        ();
     void CreateUniformBuffer      ();
@@ -170,6 +171,25 @@ private:
     void RecreateSwapChain();
     void UpdateUniformBuffer(uint32_t imageIndex) const;
     void TestAnimation(float deltaTime, glm::mat4& transform) const;
+    void CreateImage(
+        _fox_In_  uint32_t              width,
+        _fox_In_  uint32_t              height,
+        _fox_In_  VkFormat              format,
+        _fox_In_  VkImageTiling         tiling,
+        _fox_In_  VkImageUsageFlags     usage,
+        _fox_In_  VkMemoryPropertyFlags properties,
+        _fox_Out_ VkImage&              image,
+        _fox_Out_ VkDeviceMemory&       imageViewMemory
+    );
+
+    VkCommandBuffer BeginSetupCommands() const;
+    void EndSetupCommands(_fox_In_ VkCommandBuffer commandBuffer) const;
+    void TransitionImageLayout(
+        _fox_In_ VkImage image,
+        _fox_In_ VkFormat format,
+        _fox_In_ VkImageLayout oldLayout,
+        _fox_In_ VkImageLayout newLayout
+    ) const;
 
 private:
     WindowsManager* m_pWinManager{ nullptr };
@@ -182,9 +202,8 @@ private:
     VkQueue                     m_vkGraphicsQueue { VK_NULL_HANDLE };
     VkSurfaceKHR                m_vkSurface       { VK_NULL_HANDLE };
     VkQueue                     m_vkPresentQueue  { VK_NULL_HANDLE };
+    VkSwapchainKHR              m_vkSwapChain     { VK_NULL_HANDLE };
 
-    //~ Swap chain members
-    VkSwapchainKHR m_vkSwapChain { VK_NULL_HANDLE };
     struct
     {
         VkSurfaceFormatKHR SurfaceFormat;
@@ -208,6 +227,8 @@ private:
     VkDeviceMemory        m_vkVertexBufferMemory { VK_NULL_HANDLE };
     VkBuffer              m_vkIndexBuffer        { VK_NULL_HANDLE };
     VkDeviceMemory        m_vkIndexBufferMemory  { VK_NULL_HANDLE };
+    VkImage               m_vkTextureImage       { VK_NULL_HANDLE };
+    VkDeviceMemory        m_vkTextureImageMemory { VK_NULL_HANDLE };
 
     std::vector<VkCommandBuffer>  m_vkCommandBuffer;
     std::vector<VkSemaphore>      m_threadImageAvailableSemaphore;
