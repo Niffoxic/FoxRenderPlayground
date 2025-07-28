@@ -131,3 +131,23 @@ add_custom_command(
 add_custom_target(CompileShaders ALL
         DEPENDS "${OUTPUT_BASE}/${SHADER_OUTPUT_PATH}/.timestamp"
 )
+
+# Configure Assets
+set(ASSETS_SOURCE_DIR "${PROJECT_SOURCE}/assets")
+set(ASSETS_OUTPUT_DIR "${OUTPUT_BASE}/assets")
+set(ASSETS_TIMESTAMP_FILE "${ASSETS_OUTPUT_DIR}/.timestamp")
+
+add_custom_command(
+        OUTPUT ${ASSETS_TIMESTAMP_FILE}
+        COMMAND ${CMAKE_COMMAND} -E make_directory "${ASSETS_OUTPUT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E copy_directory "${ASSETS_SOURCE_DIR}" "${ASSETS_OUTPUT_DIR}"
+        COMMAND ${CMAKE_COMMAND} -E touch "${ASSETS_TIMESTAMP_FILE}"
+        DEPENDS ${ASSETS_SOURCE_DIR}
+        COMMENT "Copying updated assets to output folder with timestamp"
+)
+
+add_custom_target(copy_assets ALL
+        DEPENDS ${ASSETS_TIMESTAMP_FILE}
+)
+
+add_dependencies(application copy_assets)

@@ -672,7 +672,7 @@ void RenderManager::CreateTextureImage()
     int textureWidth, textureHeight, textureChannels;
 
     const stbi_uc* pixels = stbi_load(
-        "",
+        "assets/textures/dead-eye.jpg",
         &textureWidth,
         &textureHeight,
         &textureChannels,
@@ -1112,7 +1112,7 @@ void RenderManager::CreateImage(
     const VkFormat format,
     const VkImageTiling tiling,
     const VkImageUsageFlags usage,
-    VkMemoryPropertyFlags properties,
+    const VkMemoryPropertyFlags properties,
     VkImage& image,
     VkDeviceMemory& imageViewMemory
 )
