@@ -18,6 +18,7 @@ This is a Windows-specific graphics project built using **Vulkan** and the **Win
 - Vulkan SDK (1.3+) `note: can be downloaded with gui installer`
 - CMake 3.90+ `note: can be downloaded with gui installer`
 - Visual Studio 2019/2022 or MSVC toolchain
+- Support for x64 (very specific to this only)
 - GPU with raytracing support (RTX 20xx+/RX 6000+ recommended)
 
 ---
