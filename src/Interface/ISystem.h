@@ -10,7 +10,7 @@
 
 #define FOX_SYSTEM_GENERATOR(CLASS_NAME)\
 public:\
-    _fox_Return_safe FString GetSystemName() const override\
+    _fox_Return_enforce FString GetSystemName() const override\
     {\
         return F_TEXT(#CLASS_NAME);\
     }
