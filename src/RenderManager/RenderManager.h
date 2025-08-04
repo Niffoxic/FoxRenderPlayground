@@ -115,7 +115,7 @@ public:
 
     void OnUpdateStart(float deltaTime) override;
 
-    _fox_Return_safe VkShaderModule CreateShaderModule(_fox_In_ const std::vector<char>& code) const
+    _fox_Return_enforce VkShaderModule CreateShaderModule(_fox_In_ const std::vector<char>& code) const
     _fox_Pre_satisfies_(code.size() > 0) _fox_Success_(return != VK_NULL_HANDLE);
 
     void RecordCommandBuffer(
@@ -182,6 +182,7 @@ private:
         _fox_Out_ VkDeviceMemory&       imageViewMemory
     );
 
+    _fox_Return_enforce
     VkCommandBuffer BeginSetupCommands() const;
     void EndSetupCommands(_fox_In_ VkCommandBuffer commandBuffer) const;
     void TransitionImageLayout(

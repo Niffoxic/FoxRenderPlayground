@@ -26,7 +26,7 @@ typedef struct QUEUE_FAMILY_INDEX_DESC
     std::optional<uint32_t> GraphicsFamily;
     std::optional<uint32_t> PresentFamily;
 
-    _fox_Return_safe
+    _fox_Return_enforce
     bool IsInitialized() const
     {
         return
@@ -41,7 +41,7 @@ typedef struct SWAP_CHAIN_SUPPORT_DESC
     std::vector<VkSurfaceFormatKHR> Formats;
     std::vector<VkPresentModeKHR> PresentModes;
 
-    _fox_Return_safe
+    _fox_Return_enforce
     bool IsInitialized() const
     {
         return not Formats.empty() && not PresentModes.empty();
@@ -165,7 +165,7 @@ namespace Fox
         return requiredExtensions.empty();
     }
 
-    _fox_Return_safe _fox_Pre_satisfies_(device != VK_NULL_HANDLE) _fox_Success_(return != 0)
+    _fox_Return_enforce _fox_Pre_satisfies_(device != VK_NULL_HANDLE) _fox_Success_(return != 0)
     inline uint32_t FindMemoryType(VkPhysicalDevice device, const uint32_t filter, VkMemoryPropertyFlags properties)
     {
         VkPhysicalDeviceMemoryProperties memoryProperties;
@@ -189,7 +189,7 @@ namespace Fox
 
     #pragma region DEBUG_IMPL
 
-    _fox_Return_safe
+    _fox_Return_enforce
     inline VkResult CreateDebugUtilsMessengerEXT(
         VkInstance instance,
         const VkDebugUtilsMessengerCreateInfoEXT* pCreateInfo,

@@ -24,21 +24,21 @@ public:
      WindowsManager() = default;
     ~WindowsManager()   override;
 
-    _fox_Return_safe static std::optional<int> ProcessMessages();
+    _fox_Return_enforce static std::optional<int> ProcessMessages();
 
     //~ System Interface Impl
-    _fox_Return_safe bool OnInit() _fox_Success_(return != false) override;
+    _fox_Return_enforce bool OnInit() _fox_Success_(return != false) override;
     void OnUpdateStart(float deltaTime) override;
     void OnUpdateEnd() override;
     void OnRelease() override;
 
     //~ Getters
-    _fox_Return_safe _fox_Ret_maybenull_ HWND      GetWinHandle    () const { return m_hWnd;      }
-    _fox_Return_safe _fox_Ret_maybenull_ HINSTANCE GetWinHInstance () const { return m_hInstance; }
+    _fox_Return_enforce _fox_Ret_maybenull_ HWND      GetWinHandle    () const { return m_hWnd;      }
+    _fox_Return_enforce _fox_Ret_maybenull_ HINSTANCE GetWinHInstance () const { return m_hInstance; }
 
-    _fox_Return_safe const FString&     GetWindowsTitle() const { return m_szWindowsTitle; }
-    _fox_Return_safe bool               IsFullScreen   () const { return m_bFullScreen;    }
-    _fox_Return_safe WINDOW_SIZE_DESC   GetWindowSize  () const { return m_descWindowSize; }
+    _fox_Return_enforce const FString&     GetWindowsTitle() const { return m_szWindowsTitle; }
+    _fox_Return_enforce bool               IsFullScreen   () const { return m_bFullScreen;    }
+    _fox_Return_enforce WINDOW_SIZE_DESC   GetWindowSize  () const { return m_descWindowSize; }
 
     //~ Setters
     void SetWindowSize    (_fox_In_ const WINDOW_SIZE_DESC& desc) { m_descWindowSize = desc;   }
@@ -47,22 +47,22 @@ public:
     void AddOnWindowsTitle(_fox_In_ const FString& addOn) const;
 
 private:
-    _fox_Return_safe bool InitWindow();
+    _fox_Return_enforce bool InitWindow();
 
     //~ Handle Windows Message
-    _fox_Return_safe LRESULT MessageHandler(
+    _fox_Return_enforce LRESULT MessageHandler(
         _fox_In_ HWND hwnd,
         _fox_In_ UINT msg,
         _fox_In_ WPARAM wParam,
         _fox_In_ LPARAM lParam);
 
-    _fox_Return_safe static LRESULT CALLBACK WindowProcSetup(
+    _fox_Return_enforce static LRESULT CALLBACK WindowProcSetup(
         _fox_In_ HWND hwnd,
         _fox_In_ UINT msg,
         _fox_In_ WPARAM wParam,
         _fox_In_ LPARAM lParam);
 
-    _fox_Return_safe static LRESULT CALLBACK WindowProcThunk(
+    _fox_Return_enforce static LRESULT CALLBACK WindowProcThunk(
         _fox_In_ HWND hwnd,
         _fox_In_ UINT msg,
         _fox_In_ WPARAM wParam,

@@ -37,7 +37,7 @@ public:
     template<typename... Args>
     void Unregister(_fox_In_ Args*... args);
 
-    template<typename... Args> _fox_Return_safe
+    template<typename... Args> _fox_Return_enforce
     bool InitializeSystems(Args&... args)
     _fox_Success_(return == true);
 

@@ -25,7 +25,7 @@ public:
     virtual void OnUpdateStart(float deltaTime) = 0;
     virtual void OnUpdateEnd  () = 0;
     virtual void OnRelease    () = 0;
-    _fox_Return_safe virtual FString GetSystemName() const = 0;
+    _fox_Return_enforce virtual FString GetSystemName() const = 0;
 };
 
 #endif //ISYSTEM_H

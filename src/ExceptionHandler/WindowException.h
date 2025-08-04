@@ -24,12 +24,12 @@ public:
 
     ~WindowException() override = default;
 
-    _fox_Return_safe static FString GetExceptionMessageFromCode(DWORD exceptionCode);
-    _fox_Return_safe static FString GetErrorMessageFromCode(DWORD exceptionCode);
+    _fox_Return_enforce static FString GetExceptionMessageFromCode(DWORD exceptionCode);
+    _fox_Return_enforce static FString GetErrorMessageFromCode(DWORD exceptionCode);
 
 protected:
-    _fox_Return_safe int         GetErrorCode        () const override;
-    _fox_Return_safe FString GetAddOnErrorMessage() const _Success_(return.length() > 0) override;
+    _fox_Return_enforce int         GetErrorCode        () const override;
+    _fox_Return_enforce FString GetAddOnErrorMessage() const _Success_(return.length() > 0) override;
 
 private:
     mutable DWORD m_dwLastError;
