@@ -23,7 +23,7 @@ public:
     ISingleton& operator=(ISingleton&&)      = delete;
 
     template<typename... TArgs>
-    _fox_Return_safe static T& Get(_fox_In_ TArgs&&...args)
+    _fox_Return_enforce static T& Get(_fox_In_ TArgs&&...args)
     _fox_Success_(s_pInstance != nullptr);
 
     static void Destroy()

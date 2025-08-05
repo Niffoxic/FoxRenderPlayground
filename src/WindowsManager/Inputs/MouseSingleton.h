@@ -18,13 +18,13 @@ typedef struct _FX_MOUSE_STATE_DESC
     POINT Delta   { 0l, 0l };
     int WheelDelta{ 0 };
 
-    _fox_Return_safe
+    _fox_Return_enforce
     constexpr LONG GetX() const noexcept { return Position.x; }
-    _fox_Return_safe
+    _fox_Return_enforce
     constexpr LONG GetY() const noexcept { return Position.y; }
-    _fox_Return_safe
+    _fox_Return_enforce
     constexpr LONG GetDeltaX() const noexcept { return Delta.x; }
-    _fox_Return_safe
+    _fox_Return_enforce
     constexpr LONG GetDeltaY() const noexcept { return Delta.y; }
 } MOUSE_STATE_DESC;
 
@@ -51,17 +51,17 @@ public:
     void Reset();
 
     //~ Query functions
-    _fox_Return_safe LONG GetX         () const noexcept;
-    _fox_Return_safe LONG GetY         () const noexcept;
-    _fox_Return_safe LONG GetDeltaX    () const noexcept;
-    _fox_Return_safe LONG GetDeltaY    () const noexcept;
-    _fox_Return_safe int  GetWheelDelta() const noexcept;
+    _fox_Return_enforce LONG GetX         () const noexcept;
+    _fox_Return_enforce LONG GetY         () const noexcept;
+    _fox_Return_enforce LONG GetDeltaX    () const noexcept;
+    _fox_Return_enforce LONG GetDeltaY    () const noexcept;
+    _fox_Return_enforce int  GetWheelDelta() const noexcept;
 
-    _fox_Return_safe const MOUSE_STATE_DESC& GetState() const noexcept;
+    _fox_Return_enforce const MOUSE_STATE_DESC& GetState() const noexcept;
 
-    _fox_Return_safe bool IsMoved     () const noexcept;
-    _fox_Return_safe bool IsScrolled  () const noexcept;
-    _fox_Return_safe bool IsButtonDown(_fox_In_ EMouseButtons btn) const;
+    _fox_Return_enforce bool IsMoved     () const noexcept;
+    _fox_Return_enforce bool IsScrolled  () const noexcept;
+    _fox_Return_enforce bool IsButtonDown(_fox_In_ EMouseButtons btn) const;
 
     void DebugKeysPressed() const;
 

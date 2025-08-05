@@ -10,7 +10,7 @@
     #include <sal.h>
     #include <vcruntime.h>
 
-    #define _fox_Return_safe        _Check_return_ _NODISCARD
+    #define _fox_Return_enforce        _Check_return_ _NODISCARD
     #define _fox_In_                _In_
     #define _fox_In_z_              _In_z_
     #define _fox_Out_               _Out_

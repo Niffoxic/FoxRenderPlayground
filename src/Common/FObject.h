@@ -12,7 +12,7 @@ class FObject
 {
 public:
     FObject(): m_id(++ID_ALLOCATOR)  {}
-    _fox_Return_safe ID GetID() const { return m_id; }
+    _fox_Return_enforce ID GetID() const { return m_id; }
 
 protected:
     ~FObject() = default;

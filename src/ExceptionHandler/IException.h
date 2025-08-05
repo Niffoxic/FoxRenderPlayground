@@ -26,13 +26,13 @@ public:
 
     ~IException() override = default;
 
-    _fox_Return_safe const char* what() const noexcept override _fox_Success_(return != nullptr);
+    _fox_Return_enforce const char* what() const noexcept override _fox_Success_(return != nullptr);
 
     void SaveCrashLog(_In_ const FString& savePath) const;
 
-    _fox_Return_safe const  FString& GetFilePath     () const { return m_szErrorFileName;     }
-    _fox_Return_safe int    GetErrorLine             () const { return m_nLine;               }
-    _fox_Return_safe const  FString& GetErrorFunction() const { return m_szErrorFunctionName; }
+    _fox_Return_enforce const  FString& GetFilePath     () const { return m_szErrorFileName;     }
+    _fox_Return_enforce int    GetErrorLine             () const { return m_nLine;               }
+    _fox_Return_enforce const  FString& GetErrorFunction() const { return m_szErrorFunctionName; }
 
 protected:
     const   FString& GetErrorLog         () const;
