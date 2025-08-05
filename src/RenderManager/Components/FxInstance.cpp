@@ -8,6 +8,18 @@
 
 #include <unordered_map>
 
+#include "Common/DefineVulkan.h"
+
+static VKAPI_ATTR VkBool32 VKAPI_CALL DebugCallback(
+    VkDebugUtilsMessageSeverityFlagBitsEXT       messageSeverity,
+    VkDebugUtilsMessageTypeFlagsEXT              messageType,
+    const VkDebugUtilsMessengerCallbackDataEXT*  pCallbackData,
+    void*                                        pUserData)
+{
+    LOG_WARNING("[Validation] {}", pCallbackData->pMessage);
+    return VK_FALSE;
+}
+
 bool FxInstance::Init()
 {
     m_pAllocator = m_descInstance.pAllocator;
@@ -15,35 +27,35 @@ bool FxInstance::Init()
     FillAppInfo(m_descInstance);
     PickExtensions(m_descInstance);
     PickLayers(m_descInstance);
+#if defined(_DEBUG) || defined(DEBUG)
+    FillDebugMessenger();
+#endif
     FillInstanceCreateInfo();
 
     VkInstance instance;
-    const VkResult result = vkCreateInstance(&m_infoVkInstance, nullptr, &instance);
-    if (result != VK_SUCCESS)
+    if (const auto result = vkCreateInstance(&m_infoVkInstance, nullptr, &instance) != VK_SUCCESS)
     {
         LOG_ERROR("vkCreateInstance failed with error code: {}", static_cast<int>(result));
         THROW_EXCEPTION_MSG("Failed to create Vulkan instance");
     }
 
     m_pInstance = FxPtr<VkInstance>(instance,
-        [allocator = m_pAllocator](const VkInstance ins)
-        {
-            vkDestroyInstance(ins,
-            nullptr);
-        });
+    [allocator = m_pAllocator](const VkInstance ins)
+    {
+        vkDestroyInstance(ins,
+        nullptr);
+    });
+
+#if defined(_DEBUG) || defined(DEBUG)
+    CreateDebugMessenger();
+#endif
 
     return true;
 }
 
 void FxInstance::Release()
 {
-    if (!m_pInstance.IsValid())
-        return;
-
-#if defined(_DEBUG) || defined(DEBUG)
-    DestroyDebugMessenger();
-#endif
-
+    m_pDebugMessenger.Reset();
     m_pInstance.Reset();
 }
 
@@ -68,16 +80,54 @@ bool FxInstance::SupportsLayer(const char* layerName) const
     return false;
 }
 
-#if defined(_DEBUG) || defined(DEBUG)
-void FxInstance::SetupDebugMessenger()
+void FxInstance::FillDebugMessenger()
 {
+    m_infoDebugMessenger = {};
+    m_infoDebugMessenger.sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT;
+    m_infoDebugMessenger.messageSeverity =
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_VERBOSE_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT;
+    m_infoDebugMessenger.messageType =
+        VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+        VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT;
+    m_infoDebugMessenger.pfnUserCallback = DebugCallback;
+}
 
-}
-void FxInstance::DestroyDebugMessenger()
+void FxInstance::CreateDebugMessenger()
 {
-    m_pDebugMessenger.Reset();
+    const auto CreateDebugUtilsMessenger = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+        vkGetInstanceProcAddr(
+            m_pInstance.Get(), "vkCreateDebugUtilsMessengerEXT"
+        )
+    );
+
+    if (CreateDebugUtilsMessenger)
+    {
+        VkDebugUtilsMessengerEXT debugger;
+        if (Fox::CreateDebugUtilsMessengerEXT(m_pInstance.Get(),
+            &m_infoDebugMessenger, m_pAllocator, &debugger) != VK_SUCCESS)
+            THROW_EXCEPTION_MSG("Failed to create vulkan debugger");
+
+        LOG_SUCCESS("Created Debugger!");
+
+        m_pDebugMessenger = FxPtr<VkDebugUtilsMessengerEXT>(
+            debugger,
+            [instance = m_pInstance.Get(), allocator = m_pAllocator](const VkDebugUtilsMessengerEXT debug)
+            {
+                const auto DestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>
+                (
+                    vkGetInstanceProcAddr(instance, "vkDestroyDebugUtilsMessengerEXT")
+                );
+
+                if (DestroyDebugUtilsMessengerEXT && debug)
+                {
+                    DestroyDebugUtilsMessengerEXT(instance, debug, allocator);
+                }
+            });
+    }
 }
-#endif
 
 void FxInstance::FillAppInfo(const FOX_INSTANCE_CREATE_DESC &desc)
 {
@@ -99,12 +149,17 @@ void FxInstance::PickExtensions(const FOX_INSTANCE_CREATE_DESC& desc)
     vkEnumerateInstanceExtensionProperties(nullptr, &extensionCount, m_ppEnabledExtensions.data());
 
     // Requested extensions
-    const std::vector<std::string> desiredExtensions
+    std::vector<std::string> desiredExtensions
     {
         "VK_KHR_surface",
         "VK_KHR_win32_surface",
         "VK_EXT_debug_utils"
     };
+
+#if defined(_DEBUG) || defined(DEBUG)
+    desiredExtensions.emplace_back("VK_EXT_debug_utils");
+#endif
+
     std::unordered_map<std::string, bool> extensionMap;
     for (const auto& extension : desiredExtensions) extensionMap[extension] = false;
 
@@ -140,10 +195,15 @@ void FxInstance::PickLayers(const FOX_INSTANCE_CREATE_DESC& desc)
     vkEnumerateInstanceLayerProperties(&layerCount, m_ppEnabledLayers.data());
 
     // Requested layers
-    const std::vector<std::string> desiredLayers
+    std::vector<std::string> desiredLayers
     {
         "VK_LAYER_KHRONOS_validation"
     };
+
+#if defined(_DEBUG) || defined(DEBUG)
+    desiredLayers.emplace_back("VK_LAYER_KHRONOS_validation");
+#endif
+
     std::unordered_map<std::string, bool> layerMap;
     for (const auto& layer : desiredLayers) layerMap[layer] = false;
 
@@ -175,42 +235,16 @@ void FxInstance::PickLayers(const FOX_INSTANCE_CREATE_DESC& desc)
 void FxInstance::FillInstanceCreateInfo()
 {
     m_infoVkInstance = {};
-    m_infoVkInstance.sType          = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
-    m_infoVkInstance.enabledExtensionCount = m_ppEnabledExtensionNames.size();
-    m_infoVkInstance.enabledLayerCount  = m_ppEnabledLayerNames.size();
-    m_infoVkInstance.pApplicationInfo = &m_infoVkApp;
+    m_infoVkInstance.sType                   = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO;
+    m_infoVkInstance.enabledExtensionCount   = m_ppEnabledExtensionNames.size();
+    m_infoVkInstance.enabledLayerCount       = m_ppEnabledLayerNames.size();
+    m_infoVkInstance.pApplicationInfo        = &m_infoVkApp;
     m_infoVkInstance.ppEnabledExtensionNames = m_ppEnabledExtensionNames.data();
-    m_infoVkInstance.ppEnabledLayerNames = m_ppEnabledLayerNames.data();
-    m_infoVkInstance.flags = 0;
-    m_infoVkInstance.pNext = nullptr;
-
-    LOG_INFO("---- Vulkan Instance Create Info ----");
-
-    LOG_INFO("Application Name     : {}", m_infoVkApp.pApplicationName ? m_infoVkApp.pApplicationName : "(null)");
-    LOG_INFO("Engine Name          : {}", m_infoVkApp.pEngineName ? m_infoVkApp.pEngineName : "(null)");
-    LOG_INFO("Application Version  : {}.{}.{}",
-        VK_VERSION_MAJOR(m_infoVkApp.applicationVersion),
-        VK_VERSION_MINOR(m_infoVkApp.applicationVersion),
-        VK_VERSION_PATCH(m_infoVkApp.applicationVersion));
-
-    LOG_INFO("Engine Version       : {}.{}.{}",
-        VK_VERSION_MAJOR(m_infoVkApp.engineVersion),
-        VK_VERSION_MINOR(m_infoVkApp.engineVersion),
-        VK_VERSION_PATCH(m_infoVkApp.engineVersion));
-
-    LOG_INFO("API Version          : {}.{}.{}",
-        VK_VERSION_MAJOR(m_infoVkApp.apiVersion),
-        VK_VERSION_MINOR(m_infoVkApp.apiVersion),
-        VK_VERSION_PATCH(m_infoVkApp.apiVersion));
-
-
-    LOG_INFO("Enabled Extensions   : {}", m_ppEnabledExtensionNames.size());
-    for (const char* ext : m_ppEnabledExtensionNames)
-        LOG_INFO("  - {}", ext);
-
-    LOG_INFO("Enabled Layers       : {}", m_ppEnabledLayerNames.size());
-    for (const char* layer : m_ppEnabledLayerNames)
-        LOG_INFO("  - {}", layer);
-
-    LOG_INFO("-------------------------------------");
+    m_infoVkInstance.ppEnabledLayerNames     = m_ppEnabledLayerNames.data();
+    m_infoVkInstance.flags                   = 0;
+#if defined(_DEBUG) || defined(DEBUG)
+    m_infoVkInstance.pNext                   = &m_infoDebugMessenger;
+#else
+    m_infoVkInstance.pNext                   = nullptr;
+#endif
 }
