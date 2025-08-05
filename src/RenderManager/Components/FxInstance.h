@@ -46,11 +46,6 @@ public:
     bool SupportsExtension(_fox_In_ const char* extensinName) const;
     bool SupportsLayer    (_fox_In_ const char* layerName)    const;
 
-#if defined(_DEBUG) || defined(DEBUG)
-    void SetupDebugMessenger();
-    void DestroyDebugMessenger();
-#endif
-
     //~ Restrict Copy
     FxInstance(const FxInstance&)            = delete;
     FxInstance& operator=(const FxInstance&) = delete;
@@ -60,6 +55,9 @@ public:
     FxInstance& operator=(FxInstance&&) = default;
 
 private:
+    void SetupDebugMessenger();
+    void DestroyDebugMessenger();
+
     void FillAppInfo   (_fox_In_ const FOX_INSTANCE_CREATE_DESC& desc);
     void PickExtensions(_fox_In_ const FOX_INSTANCE_CREATE_DESC& desc);
     void PickLayers    (_fox_In_ const FOX_INSTANCE_CREATE_DESC& desc);
@@ -70,12 +68,11 @@ private:
     FxPtr<VkInstance>        m_pInstance;
     VkApplicationInfo        m_infoVkApp;
     VkInstanceCreateInfo     m_infoVkInstance;
-    std::vector<const char*> m_ppEnabledExtensions;
-    std::vector<const char*> m_ppEnabledLayers;
+    std::vector<VkExtensionProperties> m_ppEnabledExtensions;
+    std::vector<const char*> m_ppEnabledLayerNames;
+    std::vector<VkLayerProperties> m_ppEnabledLayers;
+    std::vector<const char*> m_ppEnabledExtensionNames;
     FOX_INSTANCE_CREATE_DESC m_descInstance;
-
-    std::vector<VkExtensionProperties> m_availableExtensions;
-    std::vector<VkLayerProperties>     m_availableLayers;
 
 
 #if defined(_DEBUG) || defined(DEBUG)
