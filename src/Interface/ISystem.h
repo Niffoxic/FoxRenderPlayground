@@ -16,7 +16,7 @@ public:\
     }
 
 
-class _NOVTABLE ISystem: public FObject
+class NOVTABLE ISystem: public FObject
 {
 public:
     virtual ~ISystem() = default;

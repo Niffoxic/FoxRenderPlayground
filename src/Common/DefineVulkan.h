@@ -388,17 +388,9 @@ namespace Fox
 
         return desc.IsInitialized() && swapChainAdequate && extensionFound;
     }
-
-    inline void CreateDebugUtilsMessenger(VkInstance instance, VkDebugUtilsMessengerEXT& debugMessenger)
-    {
-        VkDebugUtilsMessengerCreateInfoEXT createInfo;
-        PopulateDebugMessengerCreateInfo(createInfo);
-        if (CreateDebugUtilsMessengerEXT(instance, &createInfo, nullptr, &debugMessenger) != VK_SUCCESS)
-            THROW_EXCEPTION_MSG("Failed to set up debug messenger!");
-    }
+}
 #pragma endregion
 
 #endif //DEFINEVULKAN_H
 
-}
 

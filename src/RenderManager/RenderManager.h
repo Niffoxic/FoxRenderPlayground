@@ -8,6 +8,7 @@
 #include "Interface/ISystem.h"
 #include "Common/DefineVulkan.h"
 #include "Components/FxInstance.h"
+#include "Components/FxPhysicalDevice.h"
 
 class RenderManager final: public ISystem
 {
@@ -24,8 +25,9 @@ public:
     void OnUpdateStart(float deltaTime) override;
 
 private:
-    WindowsManager*             m_pWinManager{ nullptr };
-    std::unique_ptr<FxInstance> m_pInstance  { nullptr };
+    WindowsManager*                   m_pWinManager     { nullptr };
+    std::unique_ptr<FxInstance>       m_pInstance       { nullptr };
+    std::unique_ptr<FxPhysicalDevice> m_pPhysicalDevice { nullptr };
 };
 
 #endif //RENDERMANAGER_H

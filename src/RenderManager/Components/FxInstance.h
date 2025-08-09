@@ -55,8 +55,8 @@ public:
     FxInstance& operator=(FxInstance&&) = default;
 
 private:
-    void SetupDebugMessenger();
-    void DestroyDebugMessenger();
+    void FillDebugMessenger();
+    void CreateDebugMessenger();
 
     void FillAppInfo   (_fox_In_ const FOX_INSTANCE_CREATE_DESC& desc);
     void PickExtensions(_fox_In_ const FOX_INSTANCE_CREATE_DESC& desc);
@@ -65,21 +65,17 @@ private:
     void FillInstanceCreateInfo();
 
 private:
-    FxPtr<VkInstance>        m_pInstance;
-    VkApplicationInfo        m_infoVkApp;
-    VkInstanceCreateInfo     m_infoVkInstance;
+    FOX_INSTANCE_CREATE_DESC           m_descInstance;
+    FxPtr<VkInstance>                  m_pInstance;
+    VkApplicationInfo                  m_infoVkApp;
+    VkInstanceCreateInfo               m_infoVkInstance;
+    VkDebugUtilsMessengerCreateInfoEXT m_infoDebugMessenger;
     std::vector<VkExtensionProperties> m_ppEnabledExtensions;
-    std::vector<const char*> m_ppEnabledLayerNames;
-    std::vector<VkLayerProperties> m_ppEnabledLayers;
-    std::vector<const char*> m_ppEnabledExtensionNames;
-    FOX_INSTANCE_CREATE_DESC m_descInstance;
-
-
-#if defined(_DEBUG) || defined(DEBUG)
-    FxPtr<VkDebugUtilsMessengerEXT> m_pDebugMessenger;
-#endif
-
-    VkAllocationCallbacks* m_pAllocator{ nullptr };
+    std::vector<const char*>           m_ppEnabledLayerNames;
+    std::vector<VkLayerProperties>     m_ppEnabledLayers;
+    std::vector<const char*>           m_ppEnabledExtensionNames;
+    FxPtr<VkDebugUtilsMessengerEXT>    m_pDebugMessenger;
+    VkAllocationCallbacks*             m_pAllocator{ nullptr };
 };
 
 #endif //FXINSTANCE_H
