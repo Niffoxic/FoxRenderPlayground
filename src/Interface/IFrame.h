@@ -7,7 +7,7 @@
 
 #include "Common/FObject.h"
 
-class _NOVTABLE IFrame: public FObject
+class NOVTABLE IFrame: public FObject
 {
 public:
     virtual ~IFrame() = default;

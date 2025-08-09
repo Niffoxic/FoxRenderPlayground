@@ -9,34 +9,42 @@
 
 #include "Common/Core.h"
 #include <functional>
-#include <vulkan/vulkan.h>
 
 template<typename T>
 class FxPtr
 {
     using ResetCallback = std::function<void(T)>;
+
 public:
     FxPtr() = default;
-    FxPtr(
-        _fox_In_ T handle,
-        _fox_In_ ResetCallback destructor
-    )
-    : m_handle(handle), m_destructor(destructor)
-    {}
 
-    ~FxPtr(){ Reset(); }
+    FxPtr(_fox_In_ T handle, _fox_In_ ResetCallback destructor)
+        : m_handle(handle), m_destructor(std::move(destructor)) {}
 
-    void Reset(
-        _fox_In_ T newHandle = VK_NULL_HANDLE,
-        _fox_In_ ResetCallback destructor = nullptr
-    )
+    ~FxPtr() { Reset(); }
+
+    // Destroy current, then optionally adopt a new handle + destructor
+    void Reset(_fox_In_ T newHandle = T{}, _fox_In_ ResetCallback destructor = nullptr)
     {
-        if (m_handle != VK_NULL_HANDLE && m_destructor != nullptr) m_destructor = destructor;
+        if (m_handle != T{} && m_destructor)
+            m_destructor(m_handle);
 
-        m_handle = newHandle;
-        m_destructor = destructor;
+        m_handle     = newHandle;
+        m_destructor = std::move(destructor);
     }
 
+    // Adopt without destroying current (use with care)
+    void Disarm() { m_handle = T{}; m_destructor = nullptr; }
+
+    // Convenience for vkCreate* out-params
+    T* Put(_fox_In_ ResetCallback destructor)
+    {
+        Reset();
+        m_destructor = std::move(destructor);
+        return &m_handle;              // API will fill this
+    }
+
+    // Access
     T Get() const { return m_handle; }
     explicit operator T() const { return m_handle; }
 
@@ -46,9 +54,9 @@ public:
 
     // move only
     FxPtr(FxPtr&& other) noexcept
-    : m_handle(other.m_handle), m_destructor(other.m_destructor)
+        : m_handle(other.m_handle), m_destructor(std::move(other.m_destructor))
     {
-        other.m_handle = VK_NULL_HANDLE;
+        other.m_handle = T{};
     }
 
     FxPtr& operator=(FxPtr&& other) noexcept
@@ -56,19 +64,20 @@ public:
         if (this != &other)
         {
             Reset();
-            m_handle = other.m_handle;
+            m_handle     = other.m_handle;
             m_destructor = std::move(other.m_destructor);
-            other.m_handle = VK_NULL_HANDLE;
+            other.m_handle = T{};
         }
         return *this;
     }
 
-    _fox_Return_enforce bool IsValid       () const { return m_handle != VK_NULL_HANDLE; }
-    _fox_Return_enforce bool IsDestructible() const { return m_destructor != nullptr;    }
+    _fox_Return_enforce bool IsValid()        const { return m_handle != T{}; }
+    _fox_Return_enforce bool IsDestructible() const { return static_cast<bool>(m_destructor); }
 
 private:
-    T             m_handle    { VK_NULL_HANDLE };
-    ResetCallback m_destructor{    nullptr     };
+    T             m_handle{};
+    ResetCallback m_destructor{};
 };
+
 
 #endif //FXMEMORY_H

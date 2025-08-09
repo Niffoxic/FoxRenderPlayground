@@ -58,18 +58,25 @@ void Logger::Log(const LogLevel level, const std::string &msg)
 {
     std::scoped_lock lock(m_mutex);
 
-    std::string prefix;
+    std::string levelPrefix;
     switch (level)
     {
-    case LogLevel::Info:    prefix = "[INFO]    "; break;
-    case LogLevel::Warning: prefix = "[WARNING] "; break;
-    case LogLevel::Error:   prefix = "[ERROR]   "; break;
-    case LogLevel::Success: prefix = "[SUCCESS] "; break;
-    case LogLevel::Fail:    prefix = "[FAIL]    "; break;
-    case LogLevel::Print:   prefix = "          "; break;
+    case LogLevel::Info:    levelPrefix = "[INFO]    "; break;
+    case LogLevel::Warning: levelPrefix = "[WARNING] "; break;
+    case LogLevel::Error:   levelPrefix = "[ERROR]   "; break;
+    case LogLevel::Success: levelPrefix = "[SUCCESS] "; break;
+    case LogLevel::Fail:    levelPrefix = "[FAIL]    "; break;
+    case LogLevel::Print:   levelPrefix = "          "; break;
     }
 
-    const std::string fullMsg = std::format("{} {}\n", prefix, msg);
+    // Tree-style prefix (for regular lines inside current scope)
+    const std::string treePrefix = BuildPrefix(/*isNodeLine=*/false);
+
+    // If you still want legacy tab support for places where you used LOG_ADD_TAB/REMOVE_TAB,
+    // you can append tabs AFTER the tree prefix (or remove m_nTabs usage entirely).
+    std::string tabPrefix(m_nTabs, '\t');
+
+    const std::string fullMsg = std::format("{}{}{}{}\n", treePrefix, tabPrefix, levelPrefix, msg);
 
     // Print to terminal
     if (m_bTerminalEnabled && m_hConsole)
@@ -135,8 +142,55 @@ void Logger::EnableTerminal()
     FILE* dummy;
     freopen_s(&dummy, "CONOUT$", "w", stdout);
     freopen_s(&dummy, "CONOUT$", "w", stderr);
-    freopen_s(&dummy, "CONIN$", "r", stdin);
+    freopen_s(&dummy, "CONIN$",  "r", stdin);
 
     m_hConsole = GetStdHandle(STD_OUTPUT_HANDLE);
     m_bTerminalEnabled = true;
+    SetConsoleOutputCP(CP_UTF8);
+}
+
+
+void Logger::BeginScopeImpl(const std::string& name, bool hasNextSibling)
+{
+    const std::string nodePrefix = BuildPrefix(true);
+    Log(LogLevel::Print, nodePrefix + name);
+
+    // Descend one level; remember fox whether THIS level still has siblings
+    m_scopeHasNext.push_back(hasNextSibling);
+}
+
+void Logger::EndScopeImpl()
+{
+    if (!m_scopeHasNext.empty())
+        m_scopeHasNext.pop_back();
+}
+
+std::string Logger::BuildPrefix(const bool isNodeLine) const
+{
+    // Style chars
+    const bool unicode = (m_indentStyle == IndentStyle::Unicode);
+    const char* V  = unicode ? "│   " : "|   ";
+    const char* T  = unicode ? "├── " : "|-- ";
+    const char* L  = unicode ? "└── " : "`-- ";
+    const char* SP = "    ";
+
+    std::string pre;
+
+    // Draw vertical guides for ancestor levels
+    if (!m_scopeHasNext.empty())
+    {
+        for (size_t i = 0; i + 1 < m_scopeHasNext.size(); ++i)
+            pre += (m_scopeHasNext[i] ? V : SP);
+
+        // For the current level:
+        if (isNodeLine) {
+            // node header uses ├── or └──
+            pre += (m_scopeHasNext.back() ? T : L);
+        } else {
+            // regular log line inside scope: keep vertical if ancestors have next
+            pre += (m_scopeHasNext.back() ? V : SP);
+        }
+    }
+
+    return pre;
 }

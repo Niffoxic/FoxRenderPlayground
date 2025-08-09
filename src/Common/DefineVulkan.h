@@ -388,9 +388,9 @@ namespace Fox
 
         return desc.IsInitialized() && swapChainAdequate && extensionFound;
     }
+}
 #pragma endregion
 
 #endif //DEFINEVULKAN_H
 
-}
 

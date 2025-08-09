@@ -5,9 +5,10 @@
 #ifndef IGFXOBJECT_H
 #define IGFXOBJECT_H
 
+#include <vulkan/vulkan.h>
 #include "Common/Core.h"
 
-class _NOVTABLE IGfxObject
+class NOVTABLE IGfxObject
 {
 public:
     virtual ~IGfxObject() = default;

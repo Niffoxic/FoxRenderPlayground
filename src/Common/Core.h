@@ -38,9 +38,11 @@
 #pragma region CPP_SPECIFICS
 
 #if defined(_MSC_VER)
-    #define _NOVTABLE __declspec(novtable)
+    #define NOVTABLE __declspec(novtable)
+    #define FORCELINE __forceinline
 #else
     #define _NOVTABLE
+    #define FORCELINE
 #endif
 
 /**
